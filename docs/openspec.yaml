@@ -1,0 +1,325 @@
+openapi: 3.1.0
+info:
+  title: TaskPulse API & Services OpenSpec
+  description: |
+    Especificación formal OpenSpec / OpenAPI 3.1 para la arquitectura de TaskPulse,
+    incluyendo la gestión de autenticación, modelo de datos de tareas, políticas RLS
+    y endpoints/servicios de integración con Supabase.
+  version: 1.0.0
+  contact:
+    name: Equipo de Desarrollo Taller IA
+servers:
+  - url: https://your-project.supabase.co
+    description: Supabase Cloud API Gateway (Producción)
+  - url: http://localhost:3000/api
+    description: Servidor Local Next.js
+
+paths:
+  /auth/v1/signup:
+    post:
+      summary: Registro de nuevo usuario
+      description: Crea una nueva cuenta de usuario en Supabase Auth mediante email y contraseña.
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthCredentials'
+      responses:
+        '200':
+          description: Usuario registrado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Credenciales inválidas o correo ya existente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /auth/v1/token?grant_type=password:
+    post:
+      summary: Inicio de sesión (Login)
+      description: Autentica un usuario existente y retorna un JSON Web Token (JWT) con el rol autenticado.
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthCredentials'
+      responses:
+        '200':
+          description: Sesión iniciada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Correo o contraseña incorrectos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /rest/v1/todos:
+    get:
+      summary: Listar tareas del usuario
+      description: Obtiene las tareas pertenecientes al usuario autenticado (filtradas automáticamente por RLS).
+      tags:
+        - Tareas (Todos)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: select
+          in: query
+          description: Campos a proyectar
+          schema:
+            type: string
+            default: '*'
+        - name: is_completed
+          in: query
+          description: Filtrar por estado completado
+          schema:
+            type: string
+            enum: ['eq.true', 'eq.false']
+        - name: priority
+          in: query
+          description: Filtrar por prioridad
+          schema:
+            type: string
+            enum: ['eq.low', 'eq.medium', 'eq.high']
+        - name: order
+          in: query
+          description: Orden de resultados
+          schema:
+            type: string
+            default: 'created_at.desc'
+      responses:
+        '200':
+          description: Lista de tareas recuperadas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Todo'
+        '401':
+          description: No autorizado (Token JWT faltante o expirado).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+    post:
+      summary: Crear una nueva tarea
+      description: Inserta una tarea asociada al `auth.uid()` del usuario autenticado.
+      tags:
+        - Tareas (Todos)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTodoInput'
+      responses:
+        '201':
+          description: Tarea creada satisfactoriamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Todo'
+        '400':
+          description: Datos de entrada inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /rest/v1/todos?id=eq.{id}:
+    patch:
+      summary: Actualizar una tarea
+      description: Modifica título, descripción, prioridad o estado completado de una tarea propia.
+      tags:
+        - Tareas (Todos)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID de la tarea
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTodoInput'
+      responses:
+        '200':
+          description: Tarea actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Todo'
+        '404':
+          description: Tarea no encontrada o no pertenece al usuario.
+
+    delete:
+      summary: Eliminar una tarea
+      description: Borra permanentemente una tarea por su ID si pertenece al usuario actual.
+      tags:
+        - Tareas (Todos)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID de la tarea
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tarea eliminada sin contenido.
+        '404':
+          description: Tarea no encontrada o no pertenece al usuario.
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token de autenticación de Supabase (JWT)
+
+  schemas:
+    Todo:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - is_completed
+        - priority
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        user_id:
+          type: string
+          format: uuid
+          example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        title:
+          type: string
+          example: "Preparar presentación del curso de IA"
+        description:
+          type: string
+          nullable: true
+          example: "Incluir diagramas de arquitectura y especificación OpenSpec"
+        priority:
+          type: string
+          enum: [low, medium, high]
+          example: "high"
+        is_completed:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-09-11T18:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-09-11T18:00:00Z"
+
+    CreateTodoInput:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          example: "Implementar OpenSpec"
+        description:
+          type: string
+          example: "Documentar todos los endpoints y schemas del proyecto"
+        priority:
+          type: string
+          enum: [low, medium, high]
+          default: medium
+
+    UpdateTodoInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+        is_completed:
+          type: boolean
+
+    AuthCredentials:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "usuario@ejemplo.com"
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: "SuperClave123!"
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: Token JWT
+        token_type:
+          type: string
+          example: "bearer"
+        expires_in:
+          type: integer
+          example: 3600
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "PGRST301"
+        message:
+          type: string
+          example: "JWT expired or invalid"
