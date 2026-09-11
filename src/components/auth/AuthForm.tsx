@@ -1,5 +1,19 @@
 'use client';
 
+/**
+ * ==============================================================================
+ * COMPONENTE: FORMULARIO DE AUTENTICACIÓN (AuthForm)
+ * ==============================================================================
+ * Proporciona una interfaz unificada para:
+ * 1. Iniciar Sesión (Login) con correo y contraseña.
+ * 2. Registrarse (Sign Up) como nuevo usuario.
+ * 
+ * Incluye:
+ * - Validación de campos en tiempo real (longitud de contraseña, formato de email).
+ * - Notificaciones visuales de error amigables.
+ * - Modo demostración automático si aún no se configuran claves de Supabase.
+ */
+
 import React, { useState } from 'react';
 import { authService } from '@/services/authService';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
@@ -8,22 +22,33 @@ import { Lock, Mail, ArrowRight, UserPlus, LogIn, AlertTriangle, Info, CheckCirc
 
 export const AuthForm: React.FC = () => {
   const router = useRouter();
+  
+  // Alterna entre modo Registro (true) y modo Inicio de Sesión (false)
   const [isSignUp, setIsSignUp] = useState(false);
+  
+  // Valores controlados de los campos
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  // Mensajes de alerta en pantalla
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
+  
+  // Estado de carga durante peticiones a Supabase
   const [isLoading, setIsLoading] = useState(false);
 
   const isConfigured = isSupabaseConfigured();
 
+  /**
+   * Maneja el envío del formulario de autenticación
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setInfoMsg(null);
 
+    // En modo demo sin claves de Supabase, simulamos un inicio de sesión directo
     if (!isConfigured) {
-      // In demo mode without configured Supabase keys, simulate quick demo login
       setIsLoading(true);
       setTimeout(() => {
         setIsLoading(false);
@@ -32,6 +57,7 @@ export const AuthForm: React.FC = () => {
       return;
     }
 
+    // Validaciones de seguridad en cliente
     if (!email || !password) {
       setErrorMsg('Por favor completa todos los campos.');
       return;
@@ -45,6 +71,7 @@ export const AuthForm: React.FC = () => {
     try {
       setIsLoading(true);
       if (isSignUp) {
+        // Flujo de Registro
         const res = await authService.signUp(email, password);
         if (res.error) {
           setErrorMsg(res.error);
@@ -55,6 +82,7 @@ export const AuthForm: React.FC = () => {
           }
         }
       } else {
+        // Flujo de Inicio de Sesión
         const res = await authService.signIn(email, password);
         if (res.error) {
           setErrorMsg(res.error);
@@ -72,7 +100,7 @@ export const AuthForm: React.FC = () => {
 
   return (
     <div className="glass-card animate-fade-in" style={{ padding: '2.5rem 2rem' }}>
-      {/* Header */}
+      {/* Cabecera de la Tarjeta */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <div
           style={{
@@ -99,7 +127,7 @@ export const AuthForm: React.FC = () => {
         </p>
       </div>
 
-      {/* Supabase unconfigured helper banner */}
+      {/* Banner de ayuda si no se han configurado las claves de Supabase */}
       {!isConfigured && (
         <div
           style={{
@@ -122,7 +150,7 @@ export const AuthForm: React.FC = () => {
         </div>
       )}
 
-      {/* Alerts */}
+      {/* Alerta de Error */}
       {errorMsg && (
         <div
           className="animate-fade-in"
@@ -144,6 +172,7 @@ export const AuthForm: React.FC = () => {
         </div>
       )}
 
+      {/* Alerta de Información / Éxito */}
       {infoMsg && (
         <div
           className="animate-fade-in"
@@ -165,7 +194,7 @@ export const AuthForm: React.FC = () => {
         </div>
       )}
 
-      {/* Form */}
+      {/* Formulario con campos de Email y Contraseña */}
       <form onSubmit={handleSubmit}>
         <div className="input-group">
           <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -206,7 +235,7 @@ export const AuthForm: React.FC = () => {
         </button>
       </form>
 
-      {/* Switch Mode Tab */}
+      {/* Alternador entre Registrarse e Iniciar Sesión */}
       <div style={{
         marginTop: '1.75rem',
         paddingTop: '1.5rem',

@@ -1,3 +1,10 @@
+/**
+ * ==============================================================================
+ * PÁGINA: ACCESO Y REGISTRO (/login)
+ * ==============================================================================
+ * Renderiza el contenedor centrado para el formulario de autenticación.
+ */
+
 import { AuthForm } from '@/components/auth/AuthForm';
 
 export default function LoginPage() {

@@ -1,5 +1,16 @@
 'use client';
 
+/**
+ * ==============================================================================
+ * PÁGINA: PANEL PRINCIPAL DE TAREAS (/dashboard)
+ * ==============================================================================
+ * Orquesta toda la experiencia del usuario autenticado:
+ * 1. Inicializa la sesión y protege la ruta contra accesos anónimos.
+ * 2. Carga y sincroniza las tareas desde Supabase.
+ * 3. Muestra métricas visuales en tiempo real.
+ * 4. Permite crear, filtrar, editar, completar y eliminar tareas con notificaciones flotantes (Toasts).
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/ui/Navbar';
 import { TodoStatsCards } from '@/components/todos/TodoStatsCards';
@@ -11,109 +22,130 @@ import { authService } from '@/services/authService';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { Todo, CreateTodoDTO, UpdateTodoDTO, TodoFilter, TodoStats } from '@/types/todo';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, AlertCircle, Info, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
+import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
+
+  // Estados reactivos principales
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [stats, setStats] = useState<TodoStats>({ total: 0, completed: 0, pending: 0, completionRate: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<TodoFilter>({ status: 'all', priority: 'all', searchQuery: '' });
-  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  
+  // Estado para alertas y notificaciones emergentes (Toasts)
+  const [notificacion, setNotificacion] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
-  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
-    setNotification({ type, message });
+  /**
+   * Muestra un mensaje flotante temporal que desaparece automáticamente tras 4 segundos.
+   */
+  const mostrarNotificacion = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotificacion({ type, message });
     setTimeout(() => {
-      setNotification(null);
+      setNotificacion(null);
     }, 4000);
   };
 
-  const loadData = useCallback(async () => {
+  /**
+   * Carga las tareas desde la capa de servicios aplicando los filtros actuales
+   * y recalcula las estadísticas de productividad.
+   */
+  const cargarDatos = useCallback(async () => {
     try {
       setIsLoading(true);
       const items = await todoService.getTodos(filter);
       setTodos(items);
-      const calculatedStats = await todoService.getStats(items);
-      setStats(calculatedStats);
+      const statsCalculadas = await todoService.getStats(items);
+      setStats(statsCalculadas);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al cargar las tareas';
-      showNotification('error', msg);
+      mostrarNotificacion('error', msg);
     } finally {
       setIsLoading(false);
     }
   }, [filter]);
 
+  /**
+   * Efecto de inicialización: comprueba sesión y carga datos iniciales
+   */
   useEffect(() => {
-    const initAuth = async () => {
+    const inicializarSesion = async () => {
       if (isSupabaseConfigured()) {
-        const user = await authService.getCurrentUser();
-        if (!user) {
+        const usuario = await authService.getCurrentUser();
+        if (!usuario) {
           router.replace('/login');
           return;
         }
-        setUserEmail(user.email || 'Usuario');
+        setUserEmail(usuario.email || 'Usuario');
       } else {
         setUserEmail('invitado@modo-demo.local');
       }
-      loadData();
+      cargarDatos();
     };
 
-    initAuth();
-  }, [router, loadData]);
+    inicializarSesion();
+  }, [router, cargarDatos]);
 
-  // Actions
+  // =========================================================================
+  // MANEJADORES DE ACCIONES CRUD
+  // =========================================================================
+
+  /** Crear nueva tarea */
   const handleAddTodo = async (dto: CreateTodoDTO) => {
     try {
-      const created = await todoService.createTodo(dto);
-      showNotification('success', `Tarea "${created.title}" agregada correctamente.`);
-      loadData();
+      const creada = await todoService.createTodo(dto);
+      mostrarNotificacion('success', `Tarea "${creada.title}" agregada correctamente.`);
+      cargarDatos();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'No se pudo crear la tarea';
-      showNotification('error', msg);
+      mostrarNotificacion('error', msg);
     }
   };
 
+  /** Alternar estado completada / pendiente */
   const handleToggle = async (id: string, is_completed: boolean) => {
     try {
       await todoService.toggleTodo(id, is_completed);
-      loadData();
+      cargarDatos();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'No se pudo actualizar el estado';
-      showNotification('error', msg);
+      mostrarNotificacion('error', msg);
     }
   };
 
+  /** Eliminar tarea */
   const handleDelete = async (id: string) => {
     try {
       await todoService.deleteTodo(id);
-      showNotification('info', 'Tarea eliminada exitosamente.');
-      loadData();
+      mostrarNotificacion('info', 'Tarea eliminada exitosamente.');
+      cargarDatos();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'No se pudo eliminar la tarea';
-      showNotification('error', msg);
+      mostrarNotificacion('error', msg);
     }
   };
 
+  /** Actualizar contenido de una tarea */
   const handleUpdate = async (id: string, updates: UpdateTodoDTO) => {
     try {
       await todoService.updateTodo(id, updates);
-      showNotification('success', 'Tarea actualizada.');
-      loadData();
+      mostrarNotificacion('success', 'Tarea actualizada.');
+      cargarDatos();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'No se pudo modificar la tarea';
-      showNotification('error', msg);
+      mostrarNotificacion('error', msg);
     }
   };
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Barra de navegación superior */}
       <Navbar userEmail={userEmail} />
 
       <main className="app-container">
-        {/* Floating Toast Notification */}
-        {notification && (
+        {/* Notificación flotante emergente (Toast) */}
+        {notificacion && (
           <div
             className="animate-fade-in"
             style={{
@@ -124,9 +156,9 @@ export default function DashboardPage() {
               padding: '0.85rem 1.25rem',
               borderRadius: 'var(--radius-md)',
               background:
-                notification.type === 'success'
+                notificacion.type === 'success'
                   ? 'rgba(16, 185, 129, 0.95)'
-                  : notification.type === 'error'
+                  : notificacion.type === 'error'
                   ? 'rgba(239, 68, 68, 0.95)'
                   : 'rgba(99, 102, 241, 0.95)',
               color: '#ffffff',
@@ -139,14 +171,14 @@ export default function DashboardPage() {
               backdropFilter: 'blur(10px)',
             }}
           >
-            {notification.type === 'success' && <CheckCircle2 size={18} />}
-            {notification.type === 'error' && <AlertCircle size={18} />}
-            {notification.type === 'info' && <Info size={18} />}
-            <span>{notification.message}</span>
+            {notificacion.type === 'success' && <CheckCircle2 size={18} />}
+            {notificacion.type === 'error' && <AlertCircle size={18} />}
+            {notificacion.type === 'info' && <Info size={18} />}
+            <span>{notificacion.message}</span>
           </div>
         )}
 
-        {/* Dashboard Header Banner */}
+        {/* Encabezado del Dashboard */}
         <div style={{ marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.4rem' }}>
             Panel de Tareas
@@ -156,16 +188,16 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Stats Metrics */}
+        {/* Tarjetas de Métricas Estadísticas */}
         <TodoStatsCards stats={stats} />
 
-        {/* Create Todo Form */}
+        {/* Formulario para Añadir Tareas */}
         <TodoForm onAddTodo={handleAddTodo} />
 
-        {/* Filter and Search Bar */}
+        {/* Barra de Búsqueda y Filtros */}
         <TodoFilterBar filter={filter} onFilterChange={setFilter} />
 
-        {/* Task List */}
+        {/* Lista de Tareas */}
         <TodoList
           todos={todos}
           isLoading={isLoading}

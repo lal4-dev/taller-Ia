@@ -1,24 +1,47 @@
 'use client';
 
+/**
+ * ==============================================================================
+ * COMPONENTE: ELEMENTO DE TAREA (TodoItem)
+ * ==============================================================================
+ * Representa una tarea individual en la lista con capacidades interactivas:
+ * 1. Marcar como completada o pendiente con botón de verificación accesible.
+ * 2. Modo de edición en línea (Inline Edit) para cambiar título, descripción y prioridad.
+ * 3. Eliminación con feedback visual inmediato.
+ * 4. Borde de color dinámico según la prioridad (Rojo = Alta, Amarillo = Media, Azul/Verde = Baja).
+ */
+
 import React, { useState } from 'react';
 import { Todo, PriorityLevel, UpdateTodoDTO } from '@/types/todo';
-import { Check, Trash2, Edit2, X, Save, Calendar, AlertCircle } from 'lucide-react';
+import { Check, Trash2, Edit2, X, Save, Calendar } from 'lucide-react';
 
 interface TodoItemProps {
+  /** Objeto de la tarea a renderizar */
   todo: Todo;
+  /** Función para alternar el estado de completitud */
   onToggle: (id: string, is_completed: boolean) => Promise<void>;
+  /** Función para eliminar la tarea */
   onDelete: (id: string) => Promise<void>;
+  /** Función para actualizar el contenido de la tarea */
   onUpdate: (id: string, updates: UpdateTodoDTO) => Promise<void>;
 }
 
 export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, onUpdate }) => {
+  // Estado para controlar si el elemento está en modo de edición en línea
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Estados para los valores en edición
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDesc, setEditDesc] = useState(todo.description || '');
   const [editPriority, setEditPriority] = useState<PriorityLevel>(todo.priority);
+  
+  // Estados de carga para evitar doble clic o peticiones concurrentes
   const [isDeleting, setIsDeleting] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
+  /**
+   * Ejecuta el cambio de estado (completado/pendiente)
+   */
   const handleToggle = async () => {
     try {
       setIsToggling(true);
@@ -28,6 +51,9 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
     }
   };
 
+  /**
+   * Ejecuta el borrado de la tarea
+   */
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
@@ -37,6 +63,9 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
     }
   };
 
+  /**
+   * Guarda los cambios modificados en el modo edición
+   */
   const handleSaveEdit = async () => {
     if (!editTitle.trim()) return;
     await onUpdate(todo.id, {
@@ -47,6 +76,9 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
     setIsEditing(false);
   };
 
+  /**
+   * Formatea una fecha ISO a un formato legible en español (ej: "11 sept, 18:30")
+   */
   const formatDate = (isoString: string) => {
     try {
       const date = new Date(isoString);
@@ -80,10 +112,11 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
       }}
     >
       {!isEditing ? (
+        /* Modo Visualización Normal */
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
-          {/* Checkbox & Content */}
+          {/* Checkbox personalizado y Contenido de texto */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', flex: 1 }}>
-            {/* Custom Checkbox Button */}
+            {/* Botón de Checkbox */}
             <button
               type="button"
               onClick={handleToggle}
@@ -109,7 +142,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
               {todo.is_completed && <Check size={16} color="#ffffff" strokeWidth={3} />}
             </button>
 
-            {/* Title & Description */}
+            {/* Título, Descripción y Metadatos */}
             <div style={{ flex: 1 }}>
               <div style={{
                 fontSize: '1rem',
@@ -122,6 +155,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
                 {todo.title}
               </div>
 
+              {/* Descripción opcional */}
               {todo.description && (
                 <div style={{
                   fontSize: '0.875rem',
@@ -134,7 +168,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
                 </div>
               )}
 
-              {/* Meta tags (Priority badge & Date) */}
+              {/* Badges de Prioridad y Fecha de creación */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.65rem' }}>
                 <span className={`badge badge-${todo.priority}`}>
                   {todo.priority === 'high' ? 'Alta' : todo.priority === 'medium' ? 'Media' : 'Baja'}
@@ -148,7 +182,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
             </div>
           </div>
 
-          {/* Action buttons (Edit & Delete) */}
+          {/* Botones de acción: Editar y Borrar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <button
               onClick={() => setIsEditing(true)}
@@ -183,7 +217,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
           </div>
         </div>
       ) : (
-        /* Inline Edit Mode */
+        /* Modo Edición en Línea (Inline Edit) */
         <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           <input
             type="text"

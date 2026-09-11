@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * ==============================================================================
+ * COMPONENTE: BARRA DE NAVEGACIÓN SUPERIOR (Navbar)
+ * ==============================================================================
+ * Muestra el logotipo de la aplicación, el estado de sincronización con Supabase,
+ * el correo del usuario con sesión activa y el botón para cerrar sesión.
+ */
+
 import React from 'react';
 import { User, LogOut, CheckCircle2, Cloud, Database } from 'lucide-react';
 import { authService } from '@/services/authService';
@@ -7,13 +15,18 @@ import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 interface NavbarProps {
+  /** Correo del usuario autenticado (opcional) */
   userEmail?: string | null;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ userEmail }) => {
   const router = useRouter();
+  // Comprueba si la aplicación está conectada a la nube de Supabase o en modo local
   const isConnected = isSupabaseConfigured();
 
+  /**
+   * Maneja el cierre de sesión destruyendo el token y redirigiendo al login.
+   */
   const handleSignOut = async () => {
     await authService.signOut();
     router.push('/login');
@@ -33,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({ userEmail }) => {
       top: 0,
       zIndex: 50
     }}>
-      {/* Brand Logo & Name */}
+      {/* Logotipo y Título de la Aplicación */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
         <div style={{
           width: '40px',
@@ -57,9 +70,9 @@ export const Navbar: React.FC<NavbarProps> = ({ userEmail }) => {
         </div>
       </div>
 
-      {/* Right controls: Supabase status badge & User profile */}
+      {/* Controles del lado derecho: Indicador de conexión y Perfil */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        {/* Status Indicator */}
+        {/* Indicador de estado de Supabase */}
         <div
           title={isConnected ? 'Conectado a Supabase Cloud' : 'Modo Local (Configura .env.local para sincronizar)'}
           style={{
@@ -79,6 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({ userEmail }) => {
           <span>{isConnected ? 'Supabase Conectado' : 'Modo Demo / Local'}</span>
         </div>
 
+        {/* Datos del usuario autenticado y botón de salida */}
         {userEmail && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <div style={{

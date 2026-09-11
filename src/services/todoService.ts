@@ -1,26 +1,48 @@
+/**
+ * ==============================================================================
+ * CAPA DE SERVICIOS: GESTIÓN DE TAREAS (todoService)
+ * ==============================================================================
+ * Este servicio implementa todas las operaciones CRUD (Crear, Leer, Actualizar, Borrar)
+ * sobre la base de datos PostgreSQL en Supabase.
+ * 
+ * Aspectos clave de seguridad y arquitectura:
+ * 1. Cada consulta HTTP incluye automáticamente el token JWT del usuario actual.
+ * 2. Las políticas de Row Level Security (RLS) en PostgreSQL aseguran que cada usuario
+ *    únicamente pueda acceder y manipular sus propias filas.
+ * 3. Incluye un mecanismo de almacenamiento local (Mock Storage) como fallback para
+ *    permitir probar la interfaz inmediatamente antes de configurar Supabase.
+ */
+
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Todo, CreateTodoDTO, UpdateTodoDTO, TodoFilter, TodoStats } from '@/types/todo';
 
 export const todoService = {
   /**
-   * Obtiene todas las tareas del usuario con filtros opcionales.
+   * Obtiene la lista de tareas del usuario autenticado aplicando filtros opcionales.
+   * 
+   * @param {TodoFilter} [filter] - Filtros de estado ('all', 'pending', 'completed'), prioridad o texto.
+   * @returns {Promise<Todo[]>} Lista de tareas ordenadas cronológicamente de más reciente a más antigua.
    */
   async getTodos(filter?: TodoFilter): Promise<Todo[]> {
+    // Si Supabase no está configurado, usamos el almacenamiento local para demostración
     if (!isSupabaseConfigured()) {
       return this.getLocalMockTodos(filter);
     }
 
+    // Construcción de la consulta estructurada en Supabase
     let query = supabase
       .from('todos')
       .select('*')
       .order('created_at', { ascending: false });
 
+    // Filtrar por estado de completado si no se pide 'all'
     if (filter?.status === 'completed') {
       query = query.eq('is_completed', true);
     } else if (filter?.status === 'pending') {
       query = query.eq('is_completed', false);
     }
 
+    // Filtrar por nivel de prioridad específico
     if (filter?.priority && filter.priority !== 'all') {
       query = query.eq('priority', filter.priority);
     }
@@ -32,28 +54,33 @@ export const todoService = {
       throw new Error(`No se pudieron cargar las tareas: ${error.message}`);
     }
 
-    let results = (data || []) as Todo[];
+    let resultados = (data || []) as Todo[];
 
+    // Filtrado en memoria por término de búsqueda (título o descripción)
     if (filter?.searchQuery?.trim()) {
-      const term = filter.searchQuery.toLowerCase();
-      results = results.filter(
+      const termino = filter.searchQuery.toLowerCase();
+      resultados = resultados.filter(
         (t) =>
-          t.title.toLowerCase().includes(term) ||
-          (t.description && t.description.toLowerCase().includes(term))
+          t.title.toLowerCase().includes(termino) ||
+          (t.description && t.description.toLowerCase().includes(termino))
       );
     }
 
-    return results;
+    return resultados;
   },
 
   /**
-   * Crea una nueva tarea en Supabase.
+   * Crea una nueva tarea en Supabase asociada al ID del usuario autenticado.
+   * 
+   * @param {CreateTodoDTO} dto - Título, descripción opcional y prioridad.
+   * @returns {Promise<Todo>} La tarea recién creada con su ID generado por la base de datos.
    */
   async createTodo(dto: CreateTodoDTO): Promise<Todo> {
     if (!isSupabaseConfigured()) {
       return this.createLocalMockTodo(dto);
     }
 
+    // Obtenemos el usuario autenticado para asignarlo a la columna user_id
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('Debes iniciar sesión para crear una tarea.');
@@ -80,7 +107,11 @@ export const todoService = {
   },
 
   /**
-   * Alterna el estado de completado de una tarea.
+   * Alterna el estado de una tarea entre completada y pendiente.
+   * 
+   * @param {string} id - UUID de la tarea a modificar.
+   * @param {boolean} is_completed - Nuevo estado booleano.
+   * @returns {Promise<Todo>} La tarea con el estado actualizado.
    */
   async toggleTodo(id: string, is_completed: boolean): Promise<Todo> {
     if (!isSupabaseConfigured()) {
@@ -103,7 +134,11 @@ export const todoService = {
   },
 
   /**
-   * Actualiza el contenido o prioridad de una tarea.
+   * Actualiza los campos de una tarea existente (título, descripción, prioridad).
+   * 
+   * @param {string} id - UUID de la tarea.
+   * @param {UpdateTodoDTO} updates - Campos a modificar.
+   * @returns {Promise<Todo>} La tarea actualizada.
    */
   async updateTodo(id: string, updates: UpdateTodoDTO): Promise<Todo> {
     if (!isSupabaseConfigured()) {
@@ -126,7 +161,9 @@ export const todoService = {
   },
 
   /**
-   * Elimina una tarea por ID.
+   * Elimina permanentemente una tarea de la base de datos por su ID.
+   * 
+   * @param {string} id - UUID de la tarea a eliminar.
    */
   async deleteTodo(id: string): Promise<void> {
     if (!isSupabaseConfigured()) {
@@ -143,7 +180,10 @@ export const todoService = {
   },
 
   /**
-   * Calcula estadísticas de productividad.
+   * Calcula las métricas de rendimiento y productividad del usuario a partir de un arreglo de tareas.
+   * 
+   * @param {Todo[]} todos - Lista de tareas a evaluar.
+   * @returns {Promise<TodoStats>} Métricas de total, completadas, pendientes y porcentaje.
    */
   async getStats(todos: Todo[]): Promise<TodoStats> {
     const total = todos.length;
@@ -160,8 +200,10 @@ export const todoService = {
   },
 
   // =========================================================================
-  // MOCK STORAGE LOCAL (Fallback automático mientras el usuario conecta Supabase)
+  // MÓDULO DE PERSISTENCIA LOCAL (MOCK / OFFLINE)
   // =========================================================================
+  
+  /** Lee las tareas almacenadas en el LocalStorage del navegador */
   _getLocalStorageTodos(): Todo[] {
     if (typeof window === 'undefined') return [];
     try {
@@ -202,6 +244,7 @@ export const todoService = {
     ];
   },
 
+  /** Guarda las tareas en el LocalStorage del navegador */
   _saveLocalStorageTodos(todos: Todo[]) {
     if (typeof window === 'undefined') return;
     try {
@@ -209,6 +252,7 @@ export const todoService = {
     } catch {}
   },
 
+  /** Obtiene las tareas locales aplicando filtros */
   getLocalMockTodos(filter?: TodoFilter): Todo[] {
     let items = this._getLocalStorageTodos();
     if (filter?.status === 'completed') items = items.filter((t) => t.is_completed);
@@ -221,6 +265,7 @@ export const todoService = {
     return items;
   },
 
+  /** Crea una nueva tarea en memoria local */
   createLocalMockTodo(dto: CreateTodoDTO): Todo {
     const todos = this._getLocalStorageTodos();
     const newTodo: Todo = {
@@ -238,6 +283,7 @@ export const todoService = {
     return newTodo;
   },
 
+  /** Alterna el estado de una tarea local */
   toggleLocalMockTodo(id: string, is_completed: boolean): Todo {
     const todos = this._getLocalStorageTodos();
     const index = todos.findIndex((t) => t.id === id);
@@ -250,6 +296,7 @@ export const todoService = {
     throw new Error('Tarea no encontrada.');
   },
 
+  /** Actualiza los datos de una tarea local */
   updateLocalMockTodo(id: string, updates: UpdateTodoDTO): Todo {
     const todos = this._getLocalStorageTodos();
     const index = todos.findIndex((t) => t.id === id);
@@ -261,6 +308,7 @@ export const todoService = {
     throw new Error('Tarea no encontrada.');
   },
 
+  /** Elimina una tarea local */
   deleteLocalMockTodo(id: string): void {
     const todos = this._getLocalStorageTodos().filter((t) => t.id !== id);
     this._saveLocalStorageTodos(todos);

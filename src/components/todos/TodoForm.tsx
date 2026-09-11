@@ -1,20 +1,43 @@
 'use client';
 
+/**
+ * ==============================================================================
+ * COMPONENTE: FORMULARIO DE CREACIÓN DE TAREAS (TodoForm)
+ * ==============================================================================
+ * Permite al usuario capturar una nueva tarea con título, descripción opcional
+ * y selector de nivel de prioridad.
+ * 
+ * Características:
+ * - Estado local controlado con React `useState`.
+ * - Sección colapsable para detalles avanzados (descripción y prioridad).
+ * - Feedback visual con indicador de carga durante el guardado.
+ */
+
 import React, { useState } from 'react';
-import { Plus, Tag, AlignLeft, Sparkles, Loader2 } from 'lucide-react';
+import { Plus, Tag, AlignLeft, Loader2 } from 'lucide-react';
 import { CreateTodoDTO, PriorityLevel } from '@/types/todo';
 
 interface TodoFormProps {
+  /** Función asíncrona disparada para guardar la nueva tarea */
   onAddTodo: (dto: CreateTodoDTO) => Promise<void>;
 }
 
 export const TodoForm: React.FC<TodoFormProps> = ({ onAddTodo }) => {
+  // Estados para los campos del formulario
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('medium');
+  
+  // Estado para mostrar u ocultar los campos adicionales (descripción y prioridad)
   const [isOpenDetails, setIsOpenDetails] = useState(false);
+  
+  // Estado para deshabilitar botones mientras se procesa la petición
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * Maneja el envío del formulario.
+   * Valida que el título no esté vacío, ejecuta la función prop y reinicia los campos.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || isSubmitting) return;
@@ -27,6 +50,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onAddTodo }) => {
         priority,
       });
 
+      // Limpieza de campos tras creación exitosa
       setTitle('');
       setDescription('');
       setPriority('medium');
@@ -41,7 +65,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onAddTodo }) => {
   return (
     <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
       <form onSubmit={handleSubmit}>
-        {/* Main Input Line */}
+        {/* Fila principal: Campo de texto de la tarea y botones de acción */}
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <input
@@ -59,6 +83,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onAddTodo }) => {
             />
           </div>
 
+          {/* Botón para alternar visibilidad de descripción y prioridad */}
           <button
             type="button"
             className="btn btn-secondary"
@@ -73,6 +98,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onAddTodo }) => {
             <AlignLeft size={18} />
           </button>
 
+          {/* Botón de envío */}
           <button
             type="submit"
             disabled={!title.trim() || isSubmitting}
@@ -93,7 +119,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onAddTodo }) => {
           </button>
         </div>
 
-        {/* Collapsible Details (Description & Priority) */}
+        {/* Panel desplegable con campos adicionales */}
         {isOpenDetails && (
           <div className="animate-fade-in" style={{
             marginTop: '1.25rem',
@@ -103,6 +129,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onAddTodo }) => {
             gridTemplateColumns: '2fr 1fr',
             gap: '1rem'
           }}>
+            {/* Campo de descripción opcional */}
             <div className="input-group" style={{ marginBottom: 0 }}>
               <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <AlignLeft size={14} />
@@ -118,6 +145,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onAddTodo }) => {
               />
             </div>
 
+            {/* Selector de nivel de prioridad */}
             <div className="input-group" style={{ marginBottom: 0 }}>
               <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Tag size={14} />

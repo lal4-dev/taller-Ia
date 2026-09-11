@@ -1,5 +1,15 @@
 'use client';
 
+/**
+ * ==============================================================================
+ * PÁGINA PRINCIPAL / ENRUTADOR RAÍZ (HomePage)
+ * ==============================================================================
+ * Actúa como una compuerta de redirección inteligente:
+ * - Si el usuario ya tiene una sesión activa en Supabase -> Redirige a `/dashboard`.
+ * - Si no está autenticado -> Redirige a `/login`.
+ * - Si está en modo demo local -> Redirige directamente al `/dashboard`.
+ */
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/authService';
@@ -9,21 +19,23 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const verificarAutenticacion = async () => {
+      // En modo local sin credenciales, enviamos al dashboard directamente
       if (!isSupabaseConfigured()) {
         router.replace('/dashboard');
         return;
       }
 
-      const user = await authService.getCurrentUser();
-      if (user) {
+      // Verificamos si existe usuario autenticado
+      const usuario = await authService.getCurrentUser();
+      if (usuario) {
         router.replace('/dashboard');
       } else {
         router.replace('/login');
       }
     };
 
-    checkAuth();
+    verificarAutenticacion();
   }, [router]);
 
   return (
@@ -35,6 +47,7 @@ export default function HomePage() {
       flexDirection: 'column',
       gap: '1rem'
     }}>
+      {/* Indicador de carga animado mientras se evalúa la sesión */}
       <div
         style={{
           width: '40px',

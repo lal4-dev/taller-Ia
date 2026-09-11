@@ -2,7 +2,20 @@ import React from 'react';
 import { TodoStats } from '@/types/todo';
 import { ListTodo, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 
+/**
+ * ==============================================================================
+ * COMPONENTE: TARJETAS DE ESTADÍSTICAS Y MÉTRICAS (TodoStatsCards)
+ * ==============================================================================
+ * Renderiza 4 tarjetas visuales con diseño glassmorphism para resumir el estado
+ * actual de productividad del usuario:
+ * 1. Total de Tareas.
+ * 2. Tareas Pendientes (amarillo).
+ * 3. Tareas Completadas (verde).
+ * 4. Porcentaje de Progreso con barra de avance animada.
+ */
+
 interface TodoStatsCardsProps {
+  /** Objeto con las métricas agregadas calculadas */
   stats: TodoStats;
 }
 
@@ -14,7 +27,7 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
       gap: '1rem',
       marginBottom: '2rem'
     }}>
-      {/* Total Tareas */}
+      {/* Tarjeta 1: Total de Tareas */}
       <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{
           width: '46px',
@@ -35,7 +48,7 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
         </div>
       </div>
 
-      {/* Pendientes */}
+      {/* Tarjeta 2: Tareas Pendientes */}
       <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{
           width: '46px',
@@ -56,7 +69,7 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
         </div>
       </div>
 
-      {/* Completadas */}
+      {/* Tarjeta 3: Tareas Completadas */}
       <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{
           width: '46px',
@@ -77,7 +90,7 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
         </div>
       </div>
 
-      {/* Progreso */}
+      {/* Tarjeta 4: Tasa de Progreso General */}
       <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{
           width: '46px',
@@ -95,6 +108,7 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Progreso</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>{stats.completionRate}%</div>
+          {/* Barra de progreso visual con gradiente */}
           <div style={{
             width: '100%',
             height: '4px',
