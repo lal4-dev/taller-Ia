@@ -12,9 +12,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database.types';
 
-// Lectura de variables de entorno públicas desde .env.local
-const urlSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const claveAnonSupabase = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Lectura de variables de entorno públicas o credenciales por defecto del proyecto
+const urlSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://iayicsanzcbiarefjere.supabase.co';
+const claveAnonSupabase = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_4ZlFnqZ6zylFkD5JbS8AoQ_af-Qxlju';
 
 /**
  * Función que verifica si el usuario ya configuró sus credenciales reales de Supabase.
@@ -27,7 +27,8 @@ export const isSupabaseConfigured = (): boolean => {
     Boolean(urlSupabase) &&
     Boolean(claveAnonSupabase) &&
     !urlSupabase.includes('your-project') &&
-    !claveAnonSupabase.includes('your-anon')
+    !claveAnonSupabase.includes('your-anon') &&
+    !urlSupabase.includes('placeholder')
   );
 };
 
