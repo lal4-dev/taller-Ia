@@ -113,16 +113,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const inicializar = async () => {
-      if (isSupabaseConfigured()) {
-        const usuario = await authService.getCurrentUser();
-        if (!usuario) {
-          router.replace('/login');
-          return;
-        }
-        setUserEmail(usuario.email || 'Usuario');
-      } else {
-        setUserEmail('invitado@modo-demo.local');
+      const usuario = await authService.getCurrentUser();
+      if (!usuario) {
+        router.replace('/login');
+        return;
       }
+      setUserEmail(usuario.email || 'Usuario');
       cargarDatos(true);
     };
 

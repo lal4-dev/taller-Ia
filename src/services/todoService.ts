@@ -1,13 +1,7 @@
 /**
  * ==============================================================================
- * CAPA DE SERVICIOS: GESTIÓN DE TAREAS (todoService / servicioTareas)
+ * CAPA DE SERVICIOS: GESTIÓN DE TAREAS (todoService)
  * ==============================================================================
- * Este servicio implementa todas las operaciones CRUD sobre la tabla `tareas`
- * en la base de datos PostgreSQL de Supabase.
- * 
- * - Consultas estructuradas con nombres de columnas en español.
- * - Seguridad por usuario evaluada mediante RLS (`auth.uid() = usuario_id`).
- * - Módulo de persistencia local (Mock Storage) como respaldo.
  */
 
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
@@ -15,10 +9,7 @@ import { Tarea, CrearTareaDTO, ActualizarTareaDTO, FiltroTareas, EstadisticasTar
 
 export const todoService = {
   /**
-   * Obtiene la lista de tareas del usuario autenticado aplicando filtros opcionales.
-   * 
-   * @param {FiltroTareas} [filtro] - Filtros de estado ('todas', 'pendientes', 'completadas'), prioridad o búsqueda.
-   * @returns {Promise<Tarea[]>} Lista de tareas ordenadas de más reciente a más antigua.
+   * Obtiene la lista de tareas del usuario autenticado en Supabase.
    */
   async getTodos(filtro?: FiltroTareas): Promise<Tarea[]> {
     if (!isSupabaseConfigured()) {
@@ -30,14 +21,12 @@ export const todoService = {
       .select('*')
       .order('creado_en', { ascending: false });
 
-    // Filtrar por estado de completado
     if (filtro?.estado === 'completadas') {
       query = query.eq('completada', true);
     } else if (filtro?.estado === 'pendientes') {
       query = query.eq('completada', false);
     }
 
-    // Filtrar por nivel de prioridad específico
     if (filtro?.prioridad && filtro.prioridad !== 'todas') {
       query = query.eq('prioridad', filtro.prioridad);
     }
@@ -51,7 +40,6 @@ export const todoService = {
 
     let resultados = (data || []) as Tarea[];
 
-    // Filtrado en memoria por término de búsqueda (título o descripción)
     if (filtro?.busqueda?.trim()) {
       const termino = filtro.busqueda.toLowerCase();
       resultados = resultados.filter(
@@ -65,10 +53,7 @@ export const todoService = {
   },
 
   /**
-   * Crea una nueva tarea en Supabase asociada al ID del usuario autenticado.
-   * 
-   * @param {CrearTareaDTO} dto - Título, descripción y prioridad.
-   * @returns {Promise<Tarea>} La tarea creada.
+   * Crea una nueva tarea en Supabase.
    */
   async createTodo(dto: CrearTareaDTO): Promise<Tarea> {
     if (!isSupabaseConfigured()) {
@@ -101,11 +86,7 @@ export const todoService = {
   },
 
   /**
-   * Alterna el estado de completado de una tarea.
-   * 
-   * @param {string} id - UUID de la tarea.
-   * @param {boolean} completada - Nuevo estado booleano.
-   * @returns {Promise<Tarea>} La tarea actualizada.
+   * Alterna el estado de una tarea.
    */
   async toggleTodo(id: string, completada: boolean): Promise<Tarea> {
     if (!isSupabaseConfigured()) {
@@ -128,11 +109,7 @@ export const todoService = {
   },
 
   /**
-   * Actualiza los campos de una tarea existente.
-   * 
-   * @param {string} id - UUID de la tarea.
-   * @param {ActualizarTareaDTO} updates - Campos a modificar.
-   * @returns {Promise<Tarea>} La tarea modificada.
+   * Actualiza el contenido de una tarea.
    */
   async updateTodo(id: string, updates: ActualizarTareaDTO): Promise<Tarea> {
     if (!isSupabaseConfigured()) {
@@ -156,8 +133,6 @@ export const todoService = {
 
   /**
    * Elimina una tarea por su ID.
-   * 
-   * @param {string} id - UUID de la tarea a eliminar.
    */
   async deleteTodo(id: string): Promise<void> {
     if (!isSupabaseConfigured()) {
@@ -174,10 +149,7 @@ export const todoService = {
   },
 
   /**
-   * Calcula las métricas de rendimiento del usuario.
-   * 
-   * @param {Tarea[]} tareas - Lista de tareas a evaluar.
-   * @returns {Promise<EstadisticasTareas>}
+   * Calcula las métricas de rendimiento.
    */
   async getStats(tareas: Tarea[]): Promise<EstadisticasTareas> {
     const total = tareas.length;
@@ -194,52 +166,22 @@ export const todoService = {
   },
 
   // =========================================================================
-  // PERSISTENCIA LOCAL MOCK
+  // PERSISTENCIA LOCAL LIMPIA (0 tareas precargadas por defecto)
   // =========================================================================
   _getLocalStorageTodos(): Tarea[] {
     if (typeof window === 'undefined') return [];
     try {
-      const stored = localStorage.getItem('__taller_ia_mock_tareas__');
+      const stored = localStorage.getItem('__taller_ia_tareas__');
       if (stored) return JSON.parse(stored);
     } catch {}
-    return [
-      {
-        id: 'mock-1',
-        usuario_id: 'local-user',
-        titulo: 'Configuración en español de Supabase completada',
-        descripcion: 'La tabla `tareas` y sus columnas están 100% en español.',
-        prioridad: 'alta',
-        completada: false,
-        creado_en: new Date().toISOString(),
-        actualizado_en: new Date().toISOString(),
-      },
-      {
-        id: 'mock-2',
-        usuario_id: 'local-user',
-        titulo: 'Políticas RLS en español activas',
-        descripcion: 'Cada usuario solo accede a sus tareas en la nube.',
-        prioridad: 'media',
-        completada: false,
-        creado_en: new Date(Date.now() - 3600000).toISOString(),
-        actualizado_en: new Date(Date.now() - 3600000).toISOString(),
-      },
-      {
-        id: 'mock-3',
-        usuario_id: 'local-user',
-        titulo: 'Consultar especificación OpenSpec',
-        descripcion: 'Verificar contratos de datos y rutas en /api/openapi.',
-        prioridad: 'baja',
-        completada: true,
-        creado_en: new Date(Date.now() - 7200000).toISOString(),
-        actualizado_en: new Date(Date.now() - 7200000).toISOString(),
-      },
-    ];
+    // Siempre empieza vacío, sin tareas precargadas de demostración
+    return [];
   },
 
   _saveLocalStorageTodos(tareas: Tarea[]) {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem('__taller_ia_mock_tareas__', JSON.stringify(tareas));
+      localStorage.setItem('__taller_ia_tareas__', JSON.stringify(tareas));
     } catch {}
   },
 
@@ -300,5 +242,3 @@ export const todoService = {
     this._saveLocalStorageTodos(tareas);
   },
 };
-
-export const servicioTareas = todoService;
