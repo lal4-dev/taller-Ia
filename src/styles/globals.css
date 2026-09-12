@@ -103,13 +103,15 @@ a {
 .app-container {
   max-width: 880px;
   margin: 0 auto;
-  padding: 3rem 1.5rem 6rem;
+  padding: 2.5rem 1.5rem 6rem;
+  width: 100%;
 }
 
 .auth-container {
   max-width: 420px;
-  margin: 5rem auto;
-  padding: 1.5rem;
+  margin: 3.5rem auto;
+  padding: 1.25rem;
+  width: 100%;
 }
 
 /* Surface Cards */
@@ -321,3 +323,230 @@ a {
 ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
 }
+
+/* ==============================================================================
+   ESTILOS RESPONSIVOS Y COMPONENTES ADAPTABLES A MÓVIL
+   ============================================================================== */
+
+/* Navbar responsive */
+.navbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.75rem;
+  background: rgba(9, 9, 11, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+}
+
+.navbar-brand-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.navbar-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.navbar-user-text {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* KPIs / Stats Cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.stat-card-divider {
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 1.25rem;
+}
+
+/* Todo Form details */
+.todo-form-details-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.85rem;
+  align-items: start;
+}
+
+/* Filter Bar */
+.filter-bar-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.filter-tabs-wrapper {
+  display: inline-flex;
+  background: var(--bg-surface);
+  padding: 0.2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  gap: 0.15rem;
+}
+
+.filter-controls-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex: 1;
+  max-width: 380px;
+}
+
+/* Todo Item */
+.todo-item-card {
+  padding: 0.85rem 1.15rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  transition: all var(--transition-fast);
+}
+
+.todo-item-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.todo-item-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+/* Desktop hover effect */
+@media (hover: hover) {
+  .todo-item-actions-group {
+    opacity: 0.35;
+    transition: opacity var(--transition-fast);
+  }
+  .todo-item-card:hover .todo-item-actions-group {
+    opacity: 1;
+  }
+}
+
+/* Mobile Devices & Small Screens (<640px) */
+@media (max-width: 640px) {
+  .app-container {
+    padding: 1.25rem 0.85rem 5rem;
+  }
+
+  .auth-container {
+    margin: 1.5rem auto;
+    padding: 0.75rem;
+  }
+
+  .input-field, .select-field {
+    font-size: 16px !important; /* Evita zoom automático molesto en iPhone / Safari */
+  }
+
+  .navbar-header {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .navbar-brand-subtitle {
+    display: none;
+  }
+
+  .navbar-user-text {
+    display: none;
+  }
+
+  .navbar-user-badge {
+    padding: 0.3rem 0.4rem;
+  }
+
+  .navbar-logout-text {
+    display: none;
+  }
+
+  /* Grid 2x2 para KPIs en teléfonos */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+    padding: 1rem 0.85rem;
+  }
+
+  .stat-card-divider {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  /* Filtros organizados en móvil */
+  .filter-bar-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .filter-tabs-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+  }
+
+  .filter-tabs-wrapper button {
+    text-align: center;
+    justify-content: center;
+    padding: 0.45rem 0.25rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  .filter-controls-wrapper {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* Formulario de detalles apilado */
+  .todo-form-details-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .todo-form-btn-key {
+    display: none;
+  }
+
+  /* Items de tareas táctiles y sin overflow */
+  .todo-item-card {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .todo-item-actions-group {
+    opacity: 1 !important;
+  }
+
+  .toast-notification {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    max-width: calc(100% - 24px) !important;
+  }
+}
+

@@ -57,31 +57,22 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
 
   return (
     <div
-      className="pro-card"
+      className="pro-card todo-item-card"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{
-        padding: '0.85rem 1.15rem',
-        marginBottom: '0.5rem',
-        background: isHovered ? 'var(--bg-surface-raised)' : 'var(--bg-surface)',
-        borderColor: isHovered ? 'var(--border-muted)' : 'var(--border-subtle)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.45rem'
-      }}
     >
       {!isEditing ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.85rem' }}>
+        <div className="todo-item-main-row">
           {/* Checkbox & Main Info */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
-            {/* Minimalist Checkbox */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', flex: 1, minWidth: 0 }}>
+            {/* Minimalist Checkbox with touch-friendly hit area */}
             <button
               type="button"
               onClick={handleToggle}
               aria-label={todo.completada ? 'Marcar como pendiente' : 'Marcar como completada'}
               style={{
-                width: '18px',
-                height: '18px',
+                width: '20px',
+                height: '20px',
                 borderRadius: '4px',
                 border: todo.completada ? '1px solid #10b981' : '1px solid #3f3f46',
                 background: todo.completada ? '#10b981' : 'transparent',
@@ -90,6 +81,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
                 justifyContent: 'center',
                 cursor: 'pointer',
                 flexShrink: 0,
+                marginTop: '1px',
                 transition: 'all var(--transition-fast)'
               }}
             >
@@ -97,15 +89,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
             </button>
 
             {/* Title & Priority Badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: 0 }}>
-              <span style={{
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.45rem', flex: 1, minWidth: 0 }}>
+              <span className="todo-item-title-text" style={{
                 fontSize: '0.875rem',
                 fontWeight: 500,
                 color: todo.completada ? 'var(--text-muted)' : 'var(--text-primary)',
                 textDecoration: todo.completada ? 'line-through' : 'none',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
+                lineHeight: 1.35,
+                wordBreak: 'break-word'
               }}>
                 {todo.titulo}
               </span>
@@ -118,36 +109,30 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
           </div>
 
           {/* Right Meta & Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            {/* Created date */}
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+            {/* Created date (hidden on very small screens or compact) */}
+            <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', flexShrink: 0 }}>
               {formatDate(todo.creado_en)}
             </span>
 
-            {/* Action Buttons (Smooth opacity on hover) */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.2rem',
-              opacity: isHovered ? 1 : 0.35,
-              transition: 'opacity var(--transition-fast)'
-            }}>
+            {/* Action Buttons */}
+            <div className="todo-item-actions-group">
               <button
                 onClick={() => setIsEditing(true)}
                 className="btn btn-ghost"
-                style={{ padding: '0.3rem', color: 'var(--text-muted)' }}
+                style={{ padding: '0.4rem', color: 'var(--text-muted)' }}
                 title="Editar tarea"
               >
-                <Edit2 size={13} />
+                <Edit2 size={14} />
               </button>
 
               <button
                 onClick={handleDelete}
                 className="btn btn-danger-ghost"
-                style={{ padding: '0.3rem' }}
+                style={{ padding: '0.4rem' }}
                 title="Eliminar tarea"
               >
-                <Trash2 size={13} />
+                <Trash2 size={14} />
               </button>
             </div>
           </div>

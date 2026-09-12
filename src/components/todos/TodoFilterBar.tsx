@@ -30,23 +30,9 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '0.75rem',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '1.25rem'
-    }}>
+    <div className="filter-bar-container">
       {/* Segmented Control */}
-      <div style={{
-        display: 'inline-flex',
-        background: 'var(--bg-surface)',
-        padding: '0.2rem',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--border-subtle)',
-        gap: '0.15rem'
-      }}>
+      <div className="filter-tabs-wrapper">
         {(['todas', 'pendientes', 'completadas'] as EstadoFiltroTarea[]).map((tab) => (
           <button
             key={tab}
@@ -72,7 +58,7 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
       </div>
 
       {/* Search & Priority Selector */}
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, maxWidth: '380px' }}>
+      <div className="filter-controls-wrapper">
         {/* Search input with clean clear button */}
         <div style={{ position: 'relative', flex: 1 }}>
           <Search
@@ -89,8 +75,8 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
             style={{
               paddingLeft: '2rem',
               paddingRight: filter.busqueda ? '2rem' : '0.75rem',
-              paddingTop: '0.4rem',
-              paddingBottom: '0.4rem',
+              paddingTop: '0.45rem',
+              paddingBottom: '0.45rem',
               fontSize: '0.8rem'
             }}
           />
@@ -121,7 +107,7 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
           className="select-field"
           value={filter.prioridad || 'todas'}
           onChange={handlePriorityChange}
-          style={{ padding: '0.4rem 0.65rem', fontSize: '0.8rem' }}
+          style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem', flexShrink: 0 }}
         >
           <option value="todas">Prioridad: Todas</option>
           <option value="alta">🔴 Alta</option>

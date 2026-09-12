@@ -88,24 +88,20 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onAddTodo }) => {
             type="submit"
             disabled={!titulo.trim() || isSubmitting}
             className="btn btn-primary"
-            style={{ padding: '0.6rem 1rem' }}
+            style={{ padding: '0.6rem 0.85rem' }}
           >
             <Plus size={15} />
             <span>Crear</span>
-            <span className="key-badge" style={{ marginLeft: '4px', opacity: 0.6 }}>↵</span>
+            <span className="key-badge todo-form-btn-key" style={{ marginLeft: '4px', opacity: 0.6 }}>↵</span>
           </button>
         </div>
 
         {/* Collapsible Details */}
         {isOpenDetails && (
-          <div className="animate-fade-in" style={{
+          <div className="animate-fade-in todo-form-details-grid" style={{
             marginTop: '0.85rem',
             paddingTop: '0.85rem',
-            borderTop: '1px solid var(--border-subtle)',
-            display: 'grid',
-            gridTemplateColumns: '1fr auto',
-            gap: '0.85rem',
-            alignItems: 'start'
+            borderTop: '1px solid var(--border-subtle)'
           }}>
             {/* Description */}
             <div>

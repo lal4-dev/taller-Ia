@@ -225,7 +225,7 @@ export default function DashboardPage() {
         {/* Notificación flotante (Toast) */}
         {notificacion && (
           <div
-            className="animate-fade-in"
+            className="animate-fade-in toast-notification"
             style={{
               position: 'fixed',
               bottom: '24px',

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
 
 /**
@@ -10,6 +10,13 @@ import '@/styles/globals.css';
  * - Carga de la hoja de estilos global (`globals.css`).
  * - Configuración del idioma (`es`).
  */
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#09090b',
+};
 
 export const metadata: Metadata = {
   title: 'TaskPulse | Gestión Inteligente de Tareas con Supabase',
