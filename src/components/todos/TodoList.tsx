@@ -4,28 +4,19 @@
  * ==============================================================================
  * COMPONENTE: CONTENEDOR DE LISTA DE TAREAS (TodoList)
  * ==============================================================================
- * Gestiona los diferentes estados visuales de la colección de tareas:
- * 1. Estado de carga: muestra esqueletos pulsantes (Skeleton Loaders).
- * 2. Estado vacío: ilustración y mensaje de bienvenida cuando no hay tareas coincidentes.
- * 3. Lista activa: mapeo iterativo de cada elemento con el componente `TodoItem`.
  */
 
 import React from 'react';
-import { Todo, UpdateTodoDTO } from '@/types/todo';
+import { Tarea, ActualizarTareaDTO } from '@/types/todo';
 import { TodoItem } from './TodoItem';
 import { Sparkles } from 'lucide-react';
 
 interface TodoListProps {
-  /** Arreglo de tareas a listar */
-  todos: Todo[];
-  /** Booleano que indica si se están cargando los datos desde Supabase */
+  todos: Tarea[];
   isLoading: boolean;
-  /** Función para alternar estado de una tarea */
-  onToggle: (id: string, is_completed: boolean) => Promise<void>;
-  /** Función para eliminar una tarea */
+  onToggle: (id: string, completada: boolean) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
-  /** Función para actualizar el contenido de una tarea */
-  onUpdate: (id: string, updates: UpdateTodoDTO) => Promise<void>;
+  onUpdate: (id: string, updates: ActualizarTareaDTO) => Promise<void>;
 }
 
 export const TodoList: React.FC<TodoListProps> = ({
@@ -35,7 +26,6 @@ export const TodoList: React.FC<TodoListProps> = ({
   onDelete,
   onUpdate,
 }) => {
-  // 1. Estado de Carga (Skeleton Skeletons)
   if (isLoading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -54,7 +44,6 @@ export const TodoList: React.FC<TodoListProps> = ({
     );
   }
 
-  // 2. Estado Vacío (Empty State)
   if (todos.length === 0) {
     return (
       <div
@@ -92,7 +81,6 @@ export const TodoList: React.FC<TodoListProps> = ({
     );
   }
 
-  // 3. Renderizado de la lista de tareas
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       {todos.map((todo) => (

@@ -1,110 +1,102 @@
-# 🗄️ Guía de Configuración de Base de Datos - Supabase
+# 🗄️ Guía de Configuración de Base de Datos - Supabase (Esquema en Español)
 
-Este documento contiene el script SQL y los pasos necesarios para inicializar la base de datos de la aplicación en tu proyecto de Supabase.
+Este documento contiene el script SQL de la tabla `tareas` y los pasos para inicializar la base de datos en Supabase con nombres y políticas 100% en español.
 
 ---
 
 ## 🚀 Pasos de Configuración en el Dashboard de Supabase
 
 1. Accede a [Supabase Dashboard](https://supabase.com/dashboard).
-2. Selecciona tu proyecto creado.
-3. En el menú lateral izquierdo, haz clic en **SQL Editor** (icono con `>_`).
-4. Haz clic en **"New query"** (Nueva consulta).
-5. Pega el script SQL que se encuentra a continuación y haz clic en el botón verde **"Run"** (o presiona `Ctrl + Enter`).
+2. Selecciona tu proyecto.
+3. En el menú lateral izquierdo, haz clic en **SQL Editor** (`>_`).
+4. Haz clic en **"New query"**, pega el siguiente script y pulsa **"Run"**.
 
 ---
 
-## 📜 Script SQL Completo
+## 📜 Script SQL Completo (`tareas`)
 
 ```sql
 -- ==============================================================================
--- 1. CREACIÓN DE LA TABLA 'todos'
+-- 1. CREACIÓN DE LA TABLA 'tareas' (100% EN ESPAÑOL)
 -- ==============================================================================
-create table if not exists public.todos (
+create table if not exists public.tareas (
   id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users(id) on delete cascade not null default auth.uid(),
-  title text not null check (char_length(title) > 0),
-  description text default '',
-  priority text default 'medium' check (priority in ('low', 'medium', 'high')),
-  is_completed boolean default false not null,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+  usuario_id uuid references auth.users(id) on delete cascade not null default auth.uid(),
+  titulo text not null check (char_length(titulo) > 0),
+  descripcion text default '',
+  prioridad text default 'media' check (prioridad in ('baja', 'media', 'alta')),
+  completada boolean default false not null,
+  creado_en timestamp with time zone default timezone('utc'::text, now()) not null,
+  actualizado_en timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- ==============================================================================
 -- 2. ÍNDICES DE RENDIMIENTO
 -- ==============================================================================
-create index if not exists todos_user_id_idx on public.todos (user_id);
-create index if not exists todos_is_completed_idx on public.todos (is_completed);
-create index if not exists todos_created_at_idx on public.todos (created_at desc);
+create index if not exists tareas_usuario_id_idx on public.tareas (usuario_id);
+create index if not exists tareas_completada_idx on public.tareas (completada);
+create index if not exists tareas_creado_en_idx on public.tareas (creado_en desc);
 
 -- ==============================================================================
 -- 3. HABILITACIÓN DE ROW LEVEL SECURITY (RLS)
 -- ==============================================================================
-alter table public.todos enable row level security;
+alter table public.tareas enable row level security;
 
 -- ==============================================================================
--- 4. POLÍTICAS DE SEGURIDAD (RLS POLICIES)
+-- 4. POLÍTICAS DE SEGURIDAD EN ESPAÑOL (RLS POLICIES)
 -- ==============================================================================
 
--- Política SELECT: Los usuarios solo pueden ver sus propias tareas
-drop policy if exists "Users can read their own todos" on public.todos;
-create policy "Users can read their own todos"
-  on public.todos
-  for select
-  using (auth.uid() = user_id);
+-- Lectura: Cada usuario solo puede ver sus propias tareas
+drop policy if exists "Los usuarios pueden ver sus propias tareas" on public.tareas;
+create policy "Los usuarios pueden ver sus propias tareas"
+  on public.tareas for select
+  using (auth.uid() = usuario_id);
 
--- Política INSERT: Los usuarios solo pueden crear tareas asignadas a su propio ID
-drop policy if exists "Users can create their own todos" on public.todos;
-create policy "Users can create their own todos"
-  on public.todos
-  for insert
-  with check (auth.uid() = user_id);
+-- Creación: Cada usuario solo puede insertar asignando su propio usuario_id
+drop policy if exists "Los usuarios pueden crear sus propias tareas" on public.tareas;
+create policy "Los usuarios pueden crear sus propias tareas"
+  on public.tareas for insert
+  with check (auth.uid() = usuario_id);
 
--- Política UPDATE: Los usuarios solo pueden modificar sus propias tareas
-drop policy if exists "Users can update their own todos" on public.todos;
-create policy "Users can update their own todos"
-  on public.todos
-  for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+-- Actualización: Cada usuario solo puede modificar sus propias tareas
+drop policy if exists "Los usuarios pueden actualizar sus propias tareas" on public.tareas;
+create policy "Los usuarios pueden actualizar sus propias tareas"
+  on public.tareas for update
+  using (auth.uid() = usuario_id)
+  with check (auth.uid() = usuario_id);
 
--- Política DELETE: Los usuarios solo pueden borrar sus propias tareas
-drop policy if exists "Users can delete their own todos" on public.todos;
-create policy "Users can delete their own todos"
-  on public.todos
-  for delete
-  using (auth.uid() = user_id);
+-- Eliminación: Cada usuario solo puede borrar sus propias tareas
+drop policy if exists "Los usuarios pueden eliminar sus propias tareas" on public.tareas;
+create policy "Los usuarios pueden eliminar sus propias tareas"
+  on public.tareas for delete
+  using (auth.uid() = usuario_id);
 
 -- ==============================================================================
--- 5. TRIGGER AUTOMÁTICO PARA ACTUALIZAR 'updated_at'
+-- 5. TRIGGER AUTOMÁTICO PARA ACTUALIZAR 'actualizado_en'
 -- ==============================================================================
-create or replace function public.handle_updated_at()
+create or replace function public.actualizar_fecha_modificacion()
 returns trigger as $$
 begin
-  new.updated_at = timezone('utc'::text, now());
+  new.actualizado_en = timezone('utc'::text, now());
   return new;
 end;
 $$ language plpgsql;
 
-drop trigger if exists set_todos_updated_at on public.todos;
-create trigger set_todos_updated_at
-  before update on public.todos
+drop trigger if exists disparador_actualizar_fecha_tareas on public.tareas;
+create trigger disparador_actualizar_fecha_tareas
+  before update on public.tareas
   for each row
-  execute function public.handle_updated_at();
+  execute function public.actualizar_fecha_modificacion();
 ```
 
 ---
 
 ## 🔑 Variables de Entorno en el Proyecto
 
-Copia tus credenciales desde **Project Settings > API**:
-- **Project URL** (`NEXT_PUBLIC_SUPABASE_URL`)
-- **anon public API Key** (`NEXT_PUBLIC_SUPABASE_ANON_KEY`)
-
-Guárdalas en el archivo `.env.local` en la raíz del proyecto:
+Configura tus credenciales en el archivo `.env.local`:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
+SUPABASE_ACCESS_TOKEN=tu-personal-access-token
 ```

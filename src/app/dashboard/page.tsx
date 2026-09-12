@@ -4,11 +4,6 @@
  * ==============================================================================
  * PÁGINA: PANEL PRINCIPAL DE TAREAS (/dashboard)
  * ==============================================================================
- * Orquesta toda la experiencia del usuario autenticado:
- * 1. Inicializa la sesión y protege la ruta contra accesos anónimos.
- * 2. Carga y sincroniza las tareas desde Supabase.
- * 3. Muestra métricas visuales en tiempo real.
- * 4. Permite crear, filtrar, editar, completar y eliminar tareas con notificaciones flotantes (Toasts).
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -20,7 +15,7 @@ import { TodoList } from '@/components/todos/TodoList';
 import { todoService } from '@/services/todoService';
 import { authService } from '@/services/authService';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
-import { Todo, CreateTodoDTO, UpdateTodoDTO, TodoFilter, TodoStats } from '@/types/todo';
+import { Tarea, CrearTareaDTO, ActualizarTareaDTO, FiltroTareas, EstadisticasTareas } from '@/types/todo';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 
@@ -29,17 +24,14 @@ export default function DashboardPage() {
 
   // Estados reactivos principales
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [stats, setStats] = useState<TodoStats>({ total: 0, completed: 0, pending: 0, completionRate: 0 });
+  const [todos, setTodos] = useState<Tarea[]>([]);
+  const [stats, setStats] = useState<EstadisticasTareas>({ total: 0, completadas: 0, pendientes: 0, tasaProgreso: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<TodoFilter>({ status: 'all', priority: 'all', searchQuery: '' });
+  const [filter, setFilter] = useState<FiltroTareas>({ estado: 'todas', prioridad: 'todas', busqueda: '' });
   
-  // Estado para alertas y notificaciones emergentes (Toasts)
+  // Alertas emergentes (Toasts)
   const [notificacion, setNotificacion] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
-  /**
-   * Muestra un mensaje flotante temporal que desaparece automáticamente tras 4 segundos.
-   */
   const mostrarNotificacion = (type: 'success' | 'error' | 'info', message: string) => {
     setNotificacion({ type, message });
     setTimeout(() => {
@@ -47,10 +39,6 @@ export default function DashboardPage() {
     }, 4000);
   };
 
-  /**
-   * Carga las tareas desde la capa de servicios aplicando los filtros actuales
-   * y recalcula las estadísticas de productividad.
-   */
   const cargarDatos = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -66,9 +54,6 @@ export default function DashboardPage() {
     }
   }, [filter]);
 
-  /**
-   * Efecto de inicialización: comprueba sesión y carga datos iniciales
-   */
   useEffect(() => {
     const inicializarSesion = async () => {
       if (isSupabaseConfigured()) {
@@ -87,15 +72,11 @@ export default function DashboardPage() {
     inicializarSesion();
   }, [router, cargarDatos]);
 
-  // =========================================================================
-  // MANEJADORES DE ACCIONES CRUD
-  // =========================================================================
-
-  /** Crear nueva tarea */
-  const handleAddTodo = async (dto: CreateTodoDTO) => {
+  // Manejadores CRUD
+  const handleAddTodo = async (dto: CrearTareaDTO) => {
     try {
       const creada = await todoService.createTodo(dto);
-      mostrarNotificacion('success', `Tarea "${creada.title}" agregada correctamente.`);
+      mostrarNotificacion('success', `Tarea "${creada.titulo}" agregada correctamente.`);
       cargarDatos();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'No se pudo crear la tarea';
@@ -103,10 +84,9 @@ export default function DashboardPage() {
     }
   };
 
-  /** Alternar estado completada / pendiente */
-  const handleToggle = async (id: string, is_completed: boolean) => {
+  const handleToggle = async (id: string, completada: boolean) => {
     try {
-      await todoService.toggleTodo(id, is_completed);
+      await todoService.toggleTodo(id, completada);
       cargarDatos();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'No se pudo actualizar el estado';
@@ -114,7 +94,6 @@ export default function DashboardPage() {
     }
   };
 
-  /** Eliminar tarea */
   const handleDelete = async (id: string) => {
     try {
       await todoService.deleteTodo(id);
@@ -126,8 +105,7 @@ export default function DashboardPage() {
     }
   };
 
-  /** Actualizar contenido de una tarea */
-  const handleUpdate = async (id: string, updates: UpdateTodoDTO) => {
+  const handleUpdate = async (id: string, updates: ActualizarTareaDTO) => {
     try {
       await todoService.updateTodo(id, updates);
       mostrarNotificacion('success', 'Tarea actualizada.');
@@ -140,11 +118,9 @@ export default function DashboardPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Barra de navegación superior */}
       <Navbar userEmail={userEmail} />
 
       <main className="app-container">
-        {/* Notificación flotante emergente (Toast) */}
         {notificacion && (
           <div
             className="animate-fade-in"
@@ -178,7 +154,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Encabezado del Dashboard */}
         <div style={{ marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.4rem' }}>
             Panel de Tareas
@@ -188,16 +163,9 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Tarjetas de Métricas Estadísticas */}
         <TodoStatsCards stats={stats} />
-
-        {/* Formulario para Añadir Tareas */}
         <TodoForm onAddTodo={handleAddTodo} />
-
-        {/* Barra de Búsqueda y Filtros */}
         <TodoFilterBar filter={filter} onFilterChange={setFilter} />
-
-        {/* Lista de Tareas */}
         <TodoList
           todos={todos}
           isLoading={isLoading}

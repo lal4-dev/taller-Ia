@@ -4,37 +4,28 @@
  * ==============================================================================
  * COMPONENTE: BARRA DE FILTROS Y BÚSQUEDA (TodoFilterBar)
  * ==============================================================================
- * Ofrece controles interactivos para segmentar la lista de tareas:
- * 1. Pestañas de estado: "Todas", "Pendientes", "Completadas".
- * 2. Campo de búsqueda en texto por título/descripción.
- * 3. Selector de filtro por nivel de prioridad.
  */
 
 import React from 'react';
 import { Search, CheckCircle2, Clock, ListFilter } from 'lucide-react';
-import { TodoFilter, TodoFilterStatus, PriorityLevel } from '@/types/todo';
+import { FiltroTareas, EstadoFiltroTarea, NivelPrioridad } from '@/types/todo';
 
 interface TodoFilterBarProps {
-  /** Estado actual de los filtros aplicados */
-  filter: TodoFilter;
-  /** Función callback para notificar al componente padre de cualquier cambio en los filtros */
-  onFilterChange: (newFilter: TodoFilter) => void;
+  filter: FiltroTareas;
+  onFilterChange: (newFilter: FiltroTareas) => void;
 }
 
 export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterChange }) => {
-  // Manejador para el cambio de pestaña de estado
-  const handleStatusChange = (status: TodoFilterStatus) => {
-    onFilterChange({ ...filter, status });
+  const handleStatusChange = (estado: EstadoFiltroTarea) => {
+    onFilterChange({ ...filter, estado });
   };
 
-  // Manejador para el campo de búsqueda en vivo
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFilterChange({ ...filter, searchQuery: e.target.value });
+    onFilterChange({ ...filter, busqueda: e.target.value });
   };
 
-  // Manejador para el selector de nivel de prioridad
   const handlePriorityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onFilterChange({ ...filter, priority: e.target.value as PriorityLevel | 'all' });
+    onFilterChange({ ...filter, prioridad: e.target.value as NivelPrioridad | 'todas' });
   };
 
   return (
@@ -46,7 +37,7 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
       alignItems: 'center',
       marginBottom: '1.5rem'
     }}>
-      {/* Grupo de Pestañas Segmentadas (Todas, Pendientes, Completadas) */}
+      {/* Pestañas Segmentadas */}
       <div style={{
         display: 'flex',
         background: 'rgba(15, 23, 42, 0.6)',
@@ -55,10 +46,9 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
         border: '1px solid var(--border-subtle)',
         gap: '0.25rem'
       }}>
-        {/* Botón: Todas */}
         <button
           type="button"
-          onClick={() => handleStatusChange('all')}
+          onClick={() => handleStatusChange('todas')}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -70,18 +60,17 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
             fontWeight: 600,
             cursor: 'pointer',
             transition: 'all var(--transition-fast)',
-            background: filter.status === 'all' ? 'var(--accent-primary)' : 'transparent',
-            color: filter.status === 'all' ? '#ffffff' : 'var(--text-secondary)',
+            background: filter.estado === 'todas' ? 'var(--accent-primary)' : 'transparent',
+            color: filter.estado === 'todas' ? '#ffffff' : 'var(--text-secondary)',
           }}
         >
           <ListFilter size={15} />
           <span>Todas</span>
         </button>
 
-        {/* Botón: Pendientes */}
         <button
           type="button"
-          onClick={() => handleStatusChange('pending')}
+          onClick={() => handleStatusChange('pendientes')}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -93,18 +82,17 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
             fontWeight: 600,
             cursor: 'pointer',
             transition: 'all var(--transition-fast)',
-            background: filter.status === 'pending' ? 'var(--accent-primary)' : 'transparent',
-            color: filter.status === 'pending' ? '#ffffff' : 'var(--text-secondary)',
+            background: filter.estado === 'pendientes' ? 'var(--accent-primary)' : 'transparent',
+            color: filter.estado === 'pendientes' ? '#ffffff' : 'var(--text-secondary)',
           }}
         >
           <Clock size={15} />
           <span>Pendientes</span>
         </button>
 
-        {/* Botón: Completadas */}
         <button
           type="button"
-          onClick={() => handleStatusChange('completed')}
+          onClick={() => handleStatusChange('completadas')}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -116,8 +104,8 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
             fontWeight: 600,
             cursor: 'pointer',
             transition: 'all var(--transition-fast)',
-            background: filter.status === 'completed' ? 'var(--accent-primary)' : 'transparent',
-            color: filter.status === 'completed' ? '#ffffff' : 'var(--text-secondary)',
+            background: filter.estado === 'completadas' ? 'var(--accent-primary)' : 'transparent',
+            color: filter.estado === 'completadas' ? '#ffffff' : 'var(--text-secondary)',
           }}
         >
           <CheckCircle2 size={15} />
@@ -125,9 +113,8 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
         </button>
       </div>
 
-      {/* Controles de Búsqueda y Selector de Prioridad */}
+      {/* Búsqueda y Selector de Prioridad */}
       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flex: '1', maxWidth: '420px' }}>
-        {/* Campo de búsqueda con icono */}
         <div style={{ position: 'relative', flex: 1 }}>
           <Search
             size={16}
@@ -138,7 +125,7 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
             type="text"
             className="input-field"
             placeholder="Buscar tareas..."
-            value={filter.searchQuery || ''}
+            value={filter.busqueda || ''}
             onChange={handleSearchChange}
             style={{
               paddingLeft: '2.5rem',
@@ -149,10 +136,9 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
           />
         </div>
 
-        {/* Menú desplegable para filtrar por prioridad */}
         <select
           className="select-field"
-          value={filter.priority || 'all'}
+          value={filter.prioridad || 'todas'}
           onChange={handlePriorityChange}
           style={{
             width: 'auto',
@@ -161,10 +147,10 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
             fontSize: '0.85rem'
           }}
         >
-          <option value="all">Todas las prioridades</option>
-          <option value="high">🔴 Alta</option>
-          <option value="medium">🟡 Media</option>
-          <option value="low">🟢 Baja</option>
+          <option value="todas">Todas las prioridades</option>
+          <option value="alta">🔴 Alta</option>
+          <option value="media">🟡 Media</option>
+          <option value="baja">🟢 Baja</option>
         </select>
       </div>
     </div>

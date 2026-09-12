@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TaskPulse API & Services OpenSpec",
-    "description": "Especificación formal OpenSpec / OpenAPI 3.1 para la arquitectura de TaskPulse, autenticación, modelo de tareas, políticas RLS y endpoints/servicios.",
+    "description": "Especificación formal OpenSpec / OpenAPI 3.1 para la arquitectura de TaskPulse con esquema de datos 100% en español ('tareas'), autenticación, políticas RLS y endpoints/servicios.",
     "version": "1.0.0"
   },
   "servers": [
@@ -25,7 +25,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthCredentials"
+                "$ref": "#/components/schemas/CredencialesAutenticacion"
               }
             }
           }
@@ -36,7 +36,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
+                  "$ref": "#/components/schemas/RespuestaAutenticacion"
                 }
               }
             }
@@ -53,7 +53,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthCredentials"
+                "$ref": "#/components/schemas/CredencialesAutenticacion"
               }
             }
           }
@@ -64,7 +64,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
+                  "$ref": "#/components/schemas/RespuestaAutenticacion"
                 }
               }
             }
@@ -72,10 +72,10 @@
         }
       }
     },
-    "/rest/v1/todos": {
+    "/rest/v1/tareas": {
       "get": {
         "summary": "Listar tareas del usuario",
-        "tags": ["Tareas (Todos)"],
+        "tags": ["Tareas"],
         "security": [{ "BearerAuth": [] }],
         "responses": {
           "200": {
@@ -85,7 +85,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Todo"
+                    "$ref": "#/components/schemas/Tarea"
                   }
                 }
               }
@@ -95,14 +95,14 @@
       },
       "post": {
         "summary": "Crear una nueva tarea",
-        "tags": ["Tareas (Todos)"],
+        "tags": ["Tareas"],
         "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateTodoInput"
+                "$ref": "#/components/schemas/CrearTareaEntrada"
               }
             }
           }
@@ -113,7 +113,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Todo"
+                  "$ref": "#/components/schemas/Tarea"
                 }
               }
             }
@@ -131,30 +131,30 @@
       }
     },
     "schemas": {
-      "Todo": {
+      "Tarea": {
         "type": "object",
-        "required": ["id", "user_id", "title", "is_completed", "priority", "created_at", "updated_at"],
+        "required": ["id", "usuario_id", "titulo", "completada", "prioridad", "creado_en", "actualizado_en"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
-          "user_id": { "type": "string", "format": "uuid" },
-          "title": { "type": "string" },
-          "description": { "type": "string", "nullable": true },
-          "priority": { "type": "string", "enum": ["low", "medium", "high"] },
-          "is_completed": { "type": "boolean" },
-          "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
+          "usuario_id": { "type": "string", "format": "uuid" },
+          "titulo": { "type": "string" },
+          "descripcion": { "type": "string", "nullable": true },
+          "prioridad": { "type": "string", "enum": ["baja", "media", "alta"] },
+          "completada": { "type": "boolean" },
+          "creado_en": { "type": "string", "format": "date-time" },
+          "actualizado_en": { "type": "string", "format": "date-time" }
         }
       },
-      "CreateTodoInput": {
+      "CrearTareaEntrada": {
         "type": "object",
-        "required": ["title"],
+        "required": ["titulo"],
         "properties": {
-          "title": { "type": "string" },
-          "description": { "type": "string" },
-          "priority": { "type": "string", "enum": ["low", "medium", "high"], "default": "medium" }
+          "titulo": { "type": "string" },
+          "descripcion": { "type": "string" },
+          "prioridad": { "type": "string", "enum": ["baja", "media", "alta"], "default": "media" }
         }
       },
-      "AuthCredentials": {
+      "CredencialesAutenticacion": {
         "type": "object",
         "required": ["email", "password"],
         "properties": {
@@ -162,7 +162,7 @@
           "password": { "type": "string", "format": "password" }
         }
       },
-      "AuthResponse": {
+      "RespuestaAutenticacion": {
         "type": "object",
         "properties": {
           "access_token": { "type": "string" },

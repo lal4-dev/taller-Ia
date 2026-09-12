@@ -1,22 +1,15 @@
 import React from 'react';
-import { TodoStats } from '@/types/todo';
+import { EstadisticasTareas } from '@/types/todo';
 import { ListTodo, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 
 /**
  * ==============================================================================
  * COMPONENTE: TARJETAS DE ESTADÍSTICAS Y MÉTRICAS (TodoStatsCards)
  * ==============================================================================
- * Renderiza 4 tarjetas visuales con diseño glassmorphism para resumir el estado
- * actual de productividad del usuario:
- * 1. Total de Tareas.
- * 2. Tareas Pendientes (amarillo).
- * 3. Tareas Completadas (verde).
- * 4. Porcentaje de Progreso con barra de avance animada.
  */
 
 interface TodoStatsCardsProps {
-  /** Objeto con las métricas agregadas calculadas */
-  stats: TodoStats;
+  stats: EstadisticasTareas;
 }
 
 export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
@@ -27,7 +20,7 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
       gap: '1rem',
       marginBottom: '2rem'
     }}>
-      {/* Tarjeta 1: Total de Tareas */}
+      {/* Total Tareas */}
       <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{
           width: '46px',
@@ -48,7 +41,7 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
         </div>
       </div>
 
-      {/* Tarjeta 2: Tareas Pendientes */}
+      {/* Tareas Pendientes */}
       <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{
           width: '46px',
@@ -65,11 +58,11 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
         </div>
         <div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Pendientes</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent-warning)' }}>{stats.pending}</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent-warning)' }}>{stats.pendientes}</div>
         </div>
       </div>
 
-      {/* Tarjeta 3: Tareas Completadas */}
+      {/* Tareas Completadas */}
       <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{
           width: '46px',
@@ -86,11 +79,11 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
         </div>
         <div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Completadas</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent-success)' }}>{stats.completed}</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent-success)' }}>{stats.completadas}</div>
         </div>
       </div>
 
-      {/* Tarjeta 4: Tasa de Progreso General */}
+      {/* Tasa de Progreso */}
       <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{
           width: '46px',
@@ -107,8 +100,7 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Progreso</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>{stats.completionRate}%</div>
-          {/* Barra de progreso visual con gradiente */}
+          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>{stats.tasaProgreso}%</div>
           <div style={{
             width: '100%',
             height: '4px',
@@ -118,7 +110,7 @@ export const TodoStatsCards: React.FC<TodoStatsCardsProps> = ({ stats }) => {
             overflow: 'hidden'
           }}>
             <div style={{
-              width: `${stats.completionRate}%`,
+              width: `${stats.tasaProgreso}%`,
               height: '100%',
               background: 'var(--grad-primary)',
               transition: 'width 0.4s ease'

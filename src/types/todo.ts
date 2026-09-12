@@ -1,89 +1,96 @@
 /**
  * ==============================================================================
- * MODELOS DE DOMINIO Y TIPOS TYPESCRIPT (TAREAS Y MÉTRICAS)
+ * MODELOS DE DOMINIO Y TIPOS TYPESCRIPT EN ESPAÑOL (TAREAS)
  * ==============================================================================
  * Este archivo define las estructuras de datos que representan las tareas,
- * los filtros y los cálculos estadísticos en la aplicación.
+ * los filtros y los cálculos estadísticos en la aplicación con nombres en español.
  */
 
 /**
- * Niveles de prioridad permitidos para clasificar una tarea.
- * - 'low': Prioridad Baja (Color verde)
- * - 'medium': Prioridad Media (Color amarillo)
- * - 'high': Prioridad Alta (Color rojo)
+ * Niveles de prioridad en español para clasificar una tarea.
+ * - 'baja': Prioridad Baja (🟢 Verde)
+ * - 'media': Prioridad Media (🟡 Amarillo)
+ * - 'alta': Prioridad Alta (🔴 Rojo)
  */
-export type PriorityLevel = 'low' | 'medium' | 'high';
+export type NivelPrioridad = 'baja' | 'media' | 'alta';
+export type PriorityLevel = NivelPrioridad;
 
 /**
- * Entidad completa de una Tarea (refleja una fila de la tabla `todos` en PostgreSQL).
+ * Entidad completa de una Tarea (refleja la tabla `tareas` en PostgreSQL).
  */
-export interface Todo {
+export interface Tarea {
   /** Identificador único universal (UUID) de la tarea */
   id: string;
   /** UUID del usuario propietario (vinculado a auth.users en Supabase) */
-  user_id: string;
+  usuario_id: string;
   /** Título o descripción principal de la tarea */
-  title: string;
+  titulo: string;
   /** Descripción o notas adicionales (opcional) */
-  description?: string | null;
+  descripcion?: string | null;
   /** Nivel de urgencia o prioridad de la tarea */
-  priority: PriorityLevel;
+  prioridad: NivelPrioridad;
   /** Estado de realización: true si ya fue completada, false si está pendiente */
-  is_completed: boolean;
+  completada: boolean;
   /** Fecha y hora ISO de creación */
-  created_at: string;
+  creado_en: string;
   /** Fecha y hora ISO de la última modificación */
-  updated_at: string;
+  actualizado_en: string;
 }
+
+// Alias para compatibilidad
+export type Todo = Tarea;
 
 /**
  * Objeto de Transferencia de Datos (DTO) para crear una nueva tarea.
- * Contiene únicamente los campos requeridos y opcionales que el usuario puede enviar.
  */
-export interface CreateTodoDTO {
-  title: string;
-  description?: string;
-  priority?: PriorityLevel;
+export interface CrearTareaDTO {
+  titulo: string;
+  descripcion?: string;
+  prioridad?: NivelPrioridad;
 }
+export type CreateTodoDTO = CrearTareaDTO;
 
 /**
  * Objeto de Transferencia de Datos (DTO) para editar una tarea existente.
- * Todos los campos son opcionales para permitir actualizaciones parciales (PATCH).
  */
-export interface UpdateTodoDTO {
-  title?: string;
-  description?: string;
-  priority?: PriorityLevel;
-  is_completed?: boolean;
+export interface ActualizarTareaDTO {
+  titulo?: string;
+  descripcion?: string;
+  prioridad?: NivelPrioridad;
+  completada?: boolean;
 }
+export type UpdateTodoDTO = ActualizarTareaDTO;
 
 /**
  * Opciones de filtrado por estado de completitud.
  */
-export type TodoFilterStatus = 'all' | 'pending' | 'completed';
+export type EstadoFiltroTarea = 'todas' | 'pendientes' | 'completadas';
+export type TodoFilterStatus = EstadoFiltroTarea;
 
 /**
  * Parámetros de búsqueda y filtrado activo en la interfaz de usuario.
  */
-export interface TodoFilter {
-  /** Filtrar por estado: 'all' (todas), 'pending' (pendientes), 'completed' (completadas) */
-  status: TodoFilterStatus;
+export interface FiltroTareas {
+  /** Filtrar por estado: 'todas', 'pendientes', 'completadas' */
+  estado: EstadoFiltroTarea;
   /** Texto para búsqueda en vivo por título o descripción */
-  searchQuery?: string;
-  /** Filtrar por nivel de prioridad específico o 'all' para todas */
-  priority?: PriorityLevel | 'all';
+  busqueda?: string;
+  /** Filtrar por nivel de prioridad específico o 'todas' */
+  prioridad?: NivelPrioridad | 'todas';
 }
+export type TodoFilter = FiltroTareas;
 
 /**
  * Métricas agregadas de productividad calculadas para el usuario.
  */
-export interface TodoStats {
+export interface EstadisticasTareas {
   /** Cantidad total de tareas registradas */
   total: number;
   /** Cantidad de tareas finalizadas */
-  completed: number;
-  /** Cantidad de tareas que faltan por realizar */
-  pending: number;
+  completadas: number;
+  /** Cantidad de tareas pendientes */
+  pendientes: number;
   /** Porcentaje de avance completado (0 a 100) */
-  completionRate: number;
+  tasaProgreso: number;
 }
+export type TodoStats = EstadisticasTareas;
