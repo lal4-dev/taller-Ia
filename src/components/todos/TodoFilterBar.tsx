@@ -2,12 +2,13 @@
 
 /**
  * ==============================================================================
- * COMPONENTE: BARRA DE FILTROS Y BÚSQUEDA (TodoFilterBar)
+ * COMPONENTE: BARRA DE FILTROS (TodoFilterBar)
  * ==============================================================================
+ * Control segmentado tipo Linear con búsqueda instantánea y filtros discretos.
  */
 
 import React from 'react';
-import { Search, CheckCircle2, Clock, ListFilter } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { FiltroTareas, EstadoFiltroTarea, NivelPrioridad } from '@/types/todo';
 
 interface TodoFilterBarProps {
@@ -32,125 +33,100 @@ export const TodoFilterBar: React.FC<TodoFilterBarProps> = ({ filter, onFilterCh
     <div style={{
       display: 'flex',
       flexWrap: 'wrap',
-      gap: '1rem',
+      gap: '0.75rem',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: '1.5rem'
+      marginBottom: '1.25rem'
     }}>
-      {/* Pestañas Segmentadas */}
+      {/* Segmented Control */}
       <div style={{
-        display: 'flex',
-        background: 'rgba(15, 23, 42, 0.6)',
-        padding: '0.3rem',
+        display: 'inline-flex',
+        background: 'var(--bg-surface)',
+        padding: '0.2rem',
         borderRadius: 'var(--radius-md)',
         border: '1px solid var(--border-subtle)',
-        gap: '0.25rem'
+        gap: '0.15rem'
       }}>
-        <button
-          type="button"
-          onClick={() => handleStatusChange('todas')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            padding: '0.45rem 0.9rem',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all var(--transition-fast)',
-            background: filter.estado === 'todas' ? 'var(--accent-primary)' : 'transparent',
-            color: filter.estado === 'todas' ? '#ffffff' : 'var(--text-secondary)',
-          }}
-        >
-          <ListFilter size={15} />
-          <span>Todas</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleStatusChange('pendientes')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            padding: '0.45rem 0.9rem',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all var(--transition-fast)',
-            background: filter.estado === 'pendientes' ? 'var(--accent-primary)' : 'transparent',
-            color: filter.estado === 'pendientes' ? '#ffffff' : 'var(--text-secondary)',
-          }}
-        >
-          <Clock size={15} />
-          <span>Pendientes</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleStatusChange('completadas')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            padding: '0.45rem 0.9rem',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all var(--transition-fast)',
-            background: filter.estado === 'completadas' ? 'var(--accent-primary)' : 'transparent',
-            color: filter.estado === 'completadas' ? '#ffffff' : 'var(--text-secondary)',
-          }}
-        >
-          <CheckCircle2 size={15} />
-          <span>Completadas</span>
-        </button>
+        {(['todas', 'pendientes', 'completadas'] as EstadoFiltroTarea[]).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => handleStatusChange(tab)}
+            style={{
+              padding: '0.35rem 0.75rem',
+              borderRadius: 'var(--radius-sm)',
+              border: 'none',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'all var(--transition-fast)',
+              background: filter.estado === tab ? 'var(--bg-surface-raised)' : 'transparent',
+              color: filter.estado === tab ? '#fafafa' : 'var(--text-muted)',
+              borderBottom: filter.estado === tab ? '1px solid var(--border-muted)' : '1px solid transparent',
+              textTransform: 'capitalize'
+            }}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
-      {/* Búsqueda y Selector de Prioridad */}
-      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flex: '1', maxWidth: '420px' }}>
+      {/* Search & Priority Selector */}
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, maxWidth: '380px' }}>
+        {/* Search input with clean clear button */}
         <div style={{ position: 'relative', flex: 1 }}>
           <Search
-            size={16}
+            size={14}
             color="var(--text-muted)"
-            style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }}
+            style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)' }}
           />
           <input
             type="text"
             className="input-field"
-            placeholder="Buscar tareas..."
+            placeholder="Buscar..."
             value={filter.busqueda || ''}
             onChange={handleSearchChange}
             style={{
-              paddingLeft: '2.5rem',
-              paddingTop: '0.45rem',
-              paddingBottom: '0.45rem',
-              fontSize: '0.85rem'
+              paddingLeft: '2rem',
+              paddingRight: filter.busqueda ? '2rem' : '0.75rem',
+              paddingTop: '0.4rem',
+              paddingBottom: '0.4rem',
+              fontSize: '0.8rem'
             }}
           />
+          {filter.busqueda && (
+            <button
+              type="button"
+              onClick={() => onFilterChange({ ...filter, busqueda: '' })}
+              style={{
+                position: 'absolute',
+                right: '0.5rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
 
+        {/* Priority Filter */}
         <select
           className="select-field"
           value={filter.prioridad || 'todas'}
           onChange={handlePriorityChange}
-          style={{
-            width: 'auto',
-            paddingTop: '0.45rem',
-            paddingBottom: '0.45rem',
-            fontSize: '0.85rem'
-          }}
+          style={{ padding: '0.4rem 0.65rem', fontSize: '0.8rem' }}
         >
-          <option value="todas">Todas las prioridades</option>
+          <option value="todas">Prioridad: Todas</option>
           <option value="alta">🔴 Alta</option>
           <option value="media">🟡 Media</option>
-          <option value="baja">🟢 Baja</option>
+          <option value="baja">⚪ Baja</option>
         </select>
       </div>
     </div>

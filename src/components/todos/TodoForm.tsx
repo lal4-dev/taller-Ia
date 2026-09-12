@@ -2,12 +2,13 @@
 
 /**
  * ==============================================================================
- * COMPONENTE: FORMULARIO DE CREACIÓN DE TAREAS (TodoForm)
+ * COMPONENTE: FORMULARIO DE TAREAS (TodoForm)
  * ==============================================================================
+ * Captura rápida estilo Linear: limpio, teclado amigable y validado.
  */
 
 import React, { useState } from 'react';
-import { Plus, Tag, AlignLeft, Loader2 } from 'lucide-react';
+import { Plus, CornerDownLeft, AlignLeft, X } from 'lucide-react';
 import { CrearTareaDTO, NivelPrioridad } from '@/types/todo';
 
 interface TodoFormProps {
@@ -45,97 +46,107 @@ export const TodoForm: React.FC<TodoFormProps> = ({ onAddTodo }) => {
   };
 
   return (
-    <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+    <div className="pro-card" style={{ padding: '1rem 1.25rem', marginBottom: '1.75rem' }}>
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        {/* Main Input Row */}
+        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <input
               type="text"
               className="input-field"
-              placeholder="¿Qué necesitas lograr hoy? Escribe una nueva tarea..."
+              placeholder="Añadir una nueva tarea..."
               value={titulo}
+              maxLength={255}
               onChange={(e) => setTitulo(e.target.value)}
               disabled={isSubmitting}
               required
               style={{
-                fontSize: '1rem',
-                padding: '0.85rem 1.25rem',
+                fontSize: '0.9rem',
+                padding: '0.65rem 0.85rem',
+                border: '1px solid var(--border-subtle)'
               }}
             />
           </div>
 
+          {/* Toggle details button */}
           <button
             type="button"
             className="btn btn-secondary"
             onClick={() => setIsOpenDetails(!isOpenDetails)}
-            title="Opciones adicionales (Descripción y Prioridad)"
             style={{
-              padding: '0.85rem 1rem',
-              borderColor: isOpenDetails ? 'var(--accent-primary)' : undefined,
-              color: isOpenDetails ? 'var(--accent-primary)' : undefined,
+              padding: '0.6rem 0.75rem',
+              color: isOpenDetails ? 'var(--text-primary)' : 'var(--text-muted)',
+              borderColor: isOpenDetails ? 'var(--border-muted)' : 'var(--border-subtle)'
             }}
+            title="Añadir notas o cambiar prioridad"
           >
-            <AlignLeft size={18} />
+            <AlignLeft size={15} />
           </button>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={!titulo.trim() || isSubmitting}
             className="btn btn-primary"
-            style={{ padding: '0.85rem 1.5rem', minWidth: '130px' }}
+            style={{ padding: '0.6rem 1rem' }}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 size={18} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
-                <span>Guardando...</span>
-              </>
-            ) : (
-              <>
-                <Plus size={18} />
-                <span>Agregar</span>
-              </>
-            )}
+            <Plus size={15} />
+            <span>Crear</span>
+            <span className="key-badge" style={{ marginLeft: '4px', opacity: 0.6 }}>↵</span>
           </button>
         </div>
 
+        {/* Collapsible Details */}
         {isOpenDetails && (
           <div className="animate-fade-in" style={{
-            marginTop: '1.25rem',
-            paddingTop: '1.25rem',
+            marginTop: '0.85rem',
+            paddingTop: '0.85rem',
             borderTop: '1px solid var(--border-subtle)',
             display: 'grid',
-            gridTemplateColumns: '2fr 1fr',
-            gap: '1rem'
+            gridTemplateColumns: '1fr auto',
+            gap: '0.85rem',
+            alignItems: 'start'
           }}>
-            <div className="input-group" style={{ marginBottom: 0 }}>
-              <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <AlignLeft size={14} />
-                <span>Descripción o notas adicionales (Opcional)</span>
-              </label>
+            {/* Description */}
+            <div>
               <textarea
                 className="input-field"
                 rows={2}
-                placeholder="Añade detalles, pasos o contexto de la tarea..."
+                maxLength={2000}
+                placeholder="Descripción o notas de contexto (opcional)..."
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
-                style={{ resize: 'vertical' }}
+                style={{ resize: 'vertical', fontSize: '0.825rem' }}
               />
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: 'right' }}>
+                {descripcion.length}/2000
+              </div>
             </div>
 
-            <div className="input-group" style={{ marginBottom: 0 }}>
-              <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Tag size={14} />
-                <span>Prioridad</span>
-              </label>
-              <select
-                className="select-field"
-                value={prioridad}
-                onChange={(e) => setPrioridad(e.target.value as NivelPrioridad)}
-              >
-                <option value="baja">🟢 Baja</option>
-                <option value="media">🟡 Media</option>
-                <option value="alta">🔴 Alta</option>
-              </select>
+            {/* Priority Selector Pills */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                Prioridad
+              </span>
+              <div style={{ display: 'flex', gap: '0.35rem' }}>
+                {(['baja', 'media', 'alta'] as NivelPrioridad[]).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPrioridad(p)}
+                    className={`badge-priority badge-${p}`}
+                    style={{
+                      cursor: 'pointer',
+                      border: prioridad === p ? '1px solid currentColor' : '1px solid transparent',
+                      opacity: prioridad === p ? 1 : 0.5,
+                      textTransform: 'capitalize',
+                      padding: '0.3rem 0.6rem'
+                    }}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

@@ -2,62 +2,42 @@
 
 /**
  * ==============================================================================
- * COMPONENTE: FORMULARIO DE AUTENTICACIÓN (AuthForm)
+ * COMPONENTE: FORMULARIO DE ACCESO (AuthForm)
  * ==============================================================================
- * Proporciona una interfaz unificada para:
- * 1. Iniciar Sesión (Login) con correo y contraseña.
- * 2. Registrarse (Sign Up) como nuevo usuario.
- * 
- * Incluye:
- * - Validación de campos en tiempo real (longitud de contraseña, formato de email).
- * - Notificaciones visuales de error amigables.
- * - Modo demostración automático si aún no se configuran claves de Supabase.
+ * Estilo Vercel / Supabase: sobrio, monocromático, tipografía limpia y sin distracciones.
  */
 
 import React, { useState } from 'react';
 import { authService } from '@/services/authService';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Lock, Mail, ArrowRight, UserPlus, LogIn, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export const AuthForm: React.FC = () => {
   const router = useRouter();
-  
-  // Alterna entre modo Registro (true) y modo Inicio de Sesión (false)
   const [isSignUp, setIsSignUp] = useState(false);
-  
-  // Valores controlados de los campos
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
-  // Mensajes de alerta en pantalla
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
-  
-  // Estado de carga durante peticiones a Supabase
   const [isLoading, setIsLoading] = useState(false);
 
   const isConfigured = isSupabaseConfigured();
 
-  /**
-   * Maneja el envío del formulario de autenticación
-   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setInfoMsg(null);
 
-    // En modo demo sin claves de Supabase, simulamos un inicio de sesión directo
     if (!isConfigured) {
       setIsLoading(true);
       setTimeout(() => {
         setIsLoading(false);
         router.push('/dashboard');
-      }, 600);
+      }, 500);
       return;
     }
 
-    // Validaciones de seguridad en cliente
     if (!email || !password) {
       setErrorMsg('Por favor completa todos los campos.');
       return;
@@ -71,18 +51,16 @@ export const AuthForm: React.FC = () => {
     try {
       setIsLoading(true);
       if (isSignUp) {
-        // Flujo de Registro
         const res = await authService.signUp(email, password);
         if (res.error) {
           setErrorMsg(res.error);
         } else {
-          setInfoMsg('¡Cuenta creada con éxito! Si tienes confirmación de correo activa en Supabase, revisa tu bandeja de entrada o inicia sesión directamente.');
+          setInfoMsg('Cuenta creada correctamente. Iniciando sesión...');
           if (res.session) {
             router.push('/dashboard');
           }
         }
       } else {
-        // Flujo de Inicio de Sesión
         const res = await authService.signIn(email, password);
         if (res.error) {
           setErrorMsg(res.error);
@@ -91,7 +69,7 @@ export const AuthForm: React.FC = () => {
         }
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error en la autenticación';
+      const message = err instanceof Error ? err.message : 'Error de autenticación';
       setErrorMsg(message);
     } finally {
       setIsLoading(false);
@@ -99,120 +77,98 @@ export const AuthForm: React.FC = () => {
   };
 
   return (
-    <div className="glass-card animate-fade-in" style={{ padding: '2.5rem 2rem' }}>
-      {/* Cabecera de la Tarjeta */}
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+    <div className="pro-card animate-fade-in" style={{ padding: '2rem 1.75rem' }}>
+      {/* Brand Header */}
+      <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
         <div
           style={{
-            width: '54px',
-            height: '54px',
-            borderRadius: '16px',
-            background: 'var(--grad-primary)',
+            width: '36px',
+            height: '36px',
+            borderRadius: 'var(--radius-sm)',
+            background: '#fafafa',
+            color: '#09090b',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '1rem',
-            boxShadow: '0 8px 20px rgba(99, 102, 241, 0.4)'
+            fontWeight: 700,
+            fontSize: '1rem',
+            marginBottom: '0.85rem'
           }}
         >
-          {isSignUp ? <UserPlus size={26} color="#fff" /> : <LogIn size={26} color="#fff" />}
+          T
         </div>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.4rem' }}>
-          {isSignUp ? 'Crear una cuenta' : 'Bienvenido de nuevo'}
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+          {isSignUp ? 'Crear cuenta en TaskPulse' : 'Iniciar sesión en TaskPulse'}
         </h2>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+        <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
           {isSignUp
-            ? 'Ingresa tus datos para comenzar a organizar tus tareas'
-            : 'Ingresa a tu cuenta para gestionar tus tareas sincronizadas'}
+            ? 'Ingresa tus datos para registrar tu espacio de trabajo'
+            : 'Accede con tus credenciales de Supabase'}
         </p>
       </div>
 
-      {/* Banner de ayuda si no se han configurado las claves de Supabase */}
-      {!isConfigured && (
-        <div
-          style={{
-            padding: '0.85rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            background: 'rgba(245, 158, 11, 0.1)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            color: '#fbbf24',
-            fontSize: '0.825rem',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '0.65rem'
-          }}
-        >
-          <Info size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div>
-            <strong>Modo Demostración Activo:</strong> Puedes ingresar directamente sin credenciales o configurar tu archivo <code>.env.local</code> con Supabase para datos en la nube.
-          </div>
-        </div>
-      )}
-
-      {/* Alerta de Error */}
+      {/* Alerts */}
       {errorMsg && (
         <div
           className="animate-fade-in"
           style={{
-            padding: '0.85rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            background: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.35)',
+            padding: '0.65rem 0.85rem',
+            borderRadius: 'var(--radius-sm)',
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
             color: '#f87171',
-            fontSize: '0.875rem',
-            marginBottom: '1.25rem',
+            fontSize: '0.8rem',
+            marginBottom: '1rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.65rem'
+            gap: '0.5rem'
           }}
         >
-          <AlertTriangle size={18} style={{ flexShrink: 0 }} />
+          <AlertCircle size={15} style={{ flexShrink: 0 }} />
           <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Alerta de Información / Éxito */}
       {infoMsg && (
         <div
           className="animate-fade-in"
           style={{
-            padding: '0.85rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            background: 'rgba(16, 185, 129, 0.12)',
-            border: '1px solid rgba(16, 185, 129, 0.35)',
+            padding: '0.65rem 0.85rem',
+            borderRadius: 'var(--radius-sm)',
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
             color: '#34d399',
-            fontSize: '0.875rem',
-            marginBottom: '1.25rem',
+            fontSize: '0.8rem',
+            marginBottom: '1rem',
             display: 'flex',
-            alignItems: 'flex-start',
-            gap: '0.65rem'
+            alignItems: 'center',
+            gap: '0.5rem'
           }}
         >
-          <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
           <span>{infoMsg}</span>
         </div>
       )}
 
-      {/* Formulario con campos de Email y Contraseña */}
-      <form onSubmit={handleSubmit}>
-        <div className="input-group">
-          <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Mail size={14} /> Correo Electrónico
+      {/* Form */}
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.775rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+            Correo electrónico
           </label>
           <input
             type="email"
             className="input-field"
-            placeholder="ejemplo@correo.com"
+            placeholder="nombre@empresa.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required={isConfigured}
           />
         </div>
 
-        <div className="input-group" style={{ marginBottom: '1.75rem' }}>
-          <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Lock size={14} /> Contraseña
+        <div>
+          <label style={{ display: 'block', fontSize: '0.775rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+            Contraseña
           </label>
           <input
             type="password"
@@ -228,23 +184,23 @@ export const AuthForm: React.FC = () => {
           type="submit"
           disabled={isLoading}
           className="btn btn-primary"
-          style={{ width: '100%', padding: '0.9rem' }}
+          style={{ width: '100%', padding: '0.65rem', marginTop: '0.5rem' }}
         >
-          <span>{isLoading ? 'Procesando...' : isSignUp ? 'Registrarme' : 'Iniciar Sesión'}</span>
-          <ArrowRight size={18} />
+          <span>{isLoading ? 'Procesando...' : isSignUp ? 'Registrarse' : 'Continuar'}</span>
+          <ArrowRight size={14} />
         </button>
       </form>
 
-      {/* Alternador entre Registrarse e Iniciar Sesión */}
+      {/* Switch Form */}
       <div style={{
-        marginTop: '1.75rem',
-        paddingTop: '1.5rem',
+        marginTop: '1.5rem',
+        paddingTop: '1rem',
         borderTop: '1px solid var(--border-subtle)',
         textAlign: 'center',
-        fontSize: '0.875rem',
-        color: 'var(--text-secondary)'
+        fontSize: '0.8rem',
+        color: 'var(--text-muted)'
       }}>
-        {isSignUp ? '¿Ya tienes una cuenta registrada?' : '¿Aún no tienes una cuenta?'}{' '}
+        {isSignUp ? '¿Ya tienes una cuenta?' : '¿No tienes cuenta todavía?'}{' '}
         <button
           type="button"
           onClick={() => {
@@ -255,14 +211,14 @@ export const AuthForm: React.FC = () => {
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--accent-primary)',
-            fontWeight: 700,
+            color: 'var(--text-primary)',
+            fontWeight: 600,
             cursor: 'pointer',
-            marginLeft: '4px',
+            marginLeft: '3px',
             textDecoration: 'underline'
           }}
         >
-          {isSignUp ? 'Inicia sesión aquí' : 'Crea una cuenta gratis'}
+          {isSignUp ? 'Inicia sesión' : 'Regístrate'}
         </button>
       </div>
     </div>

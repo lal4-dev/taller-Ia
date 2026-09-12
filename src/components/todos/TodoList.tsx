@@ -2,14 +2,15 @@
 
 /**
  * ==============================================================================
- * COMPONENTE: CONTENEDOR DE LISTA DE TAREAS (TodoList)
+ * COMPONENTE: LISTA DE TAREAS (TodoList)
  * ==============================================================================
+ * Renderiza la colección de tareas, esqueletos sutiles o estado vacío minimalista.
  */
 
 import React from 'react';
 import { Tarea, ActualizarTareaDTO } from '@/types/todo';
 import { TodoItem } from './TodoItem';
-import { Sparkles } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 interface TodoListProps {
   todos: Tarea[];
@@ -26,17 +27,18 @@ export const TodoList: React.FC<TodoListProps> = ({
   onDelete,
   onUpdate,
 }) => {
+  // Skeleton Loader sobrio
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {[1, 2, 3].map((n) => (
           <div
             key={n}
-            className="glass-card"
+            className="pro-card"
             style={{
-              height: '75px',
-              animation: 'pulse 1.5s ease-in-out infinite',
-              opacity: 0.5,
+              height: '48px',
+              opacity: 0.35,
+              background: 'var(--bg-surface-raised)'
             }}
           />
         ))}
@@ -44,37 +46,41 @@ export const TodoList: React.FC<TodoListProps> = ({
     );
   }
 
+  // Estado vacío sobrio
   if (todos.length === 0) {
     return (
       <div
-        className="glass-card"
+        className="pro-card"
         style={{
-          padding: '3.5rem 2rem',
+          padding: '3rem 2rem',
           textAlign: 'center',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '1rem',
+          gap: '0.75rem',
+          borderStyle: 'dashed'
         }}
       >
         <div
           style={{
-            width: '60px',
-            height: '60px',
+            width: '36px',
+            height: '36px',
             borderRadius: '50%',
-            background: 'rgba(99, 102, 241, 0.1)',
+            background: 'var(--bg-surface-raised)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--accent-primary)',
+            color: 'var(--text-muted)'
           }}
         >
-          <Sparkles size={28} />
+          <CheckCircle2 size={18} />
         </div>
         <div>
-          <h3 style={{ fontSize: '1.2rem', marginBottom: '0.35rem' }}>No hay tareas aquí</h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '340px' }}>
-            Todo está al día o no coincide con los filtros seleccionados. ¡Crea una nueva tarea arriba para empezar!
+          <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            No hay tareas pendientes
+          </div>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+            Crea una nueva tarea arriba o cambia los filtros de búsqueda.
           </p>
         </div>
       </div>
