@@ -4,14 +4,15 @@
  * ==============================================================================
  * PÁGINA: PANEL PRINCIPAL DE TAREAS (/dashboard)
  * ==============================================================================
- * Implementa Actualizaciones Optimistas (Optimistic UI):
- * - Respuesta instantánea a clics (0 ms de latencia percibida).
- * - Sincronización transparente en segundo plano con Supabase.
- * - Deshacer (Undo) en eliminación de tareas.
- * - Sin parpadeos de carga (Skeleton Flash) al interactuar.
+ * Arquitectura de Estado Unificada:
+ * 1. Mantiene el conjunto total de tareas (`todasLasTareas`) del usuario.
+ * 2. Las métricas (Total, Pendientes, Completadas, Avance) siempre reflejan el
+ *    progreso global del usuario sin distorsionarse al aplicar filtros.
+ * 3. Las tareas visibles (`tareasFiltradas`) se calculan en memoria con `useMemo`.
+ * 4. Actualizaciones optimistas a 0 ms con soporte de Deshacer (Undo).
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Navbar } from '@/components/ui/Navbar';
 import { TodoStatsCards } from '@/components/todos/TodoStatsCards';
 import { TodoForm } from '@/components/todos/TodoForm';
@@ -20,17 +21,16 @@ import { TodoList } from '@/components/todos/TodoList';
 import { todoService } from '@/services/todoService';
 import { authService } from '@/services/authService';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
-import { Tarea, CrearTareaDTO, ActualizarTareaDTO, FiltroTareas, EstadisticasTareas } from '@/types/todo';
+import { Tarea, CrearTareaDTO, ActualizarTareaDTO, FiltroTareas } from '@/types/todo';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, AlertCircle, RotateCcw, X } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
 
-  // Estados reactivos
+  // Estados reactivos principales
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [todos, setTodos] = useState<Tarea[]>([]);
-  const [stats, setStats] = useState<EstadisticasTareas>({ total: 0, completadas: 0, pendientes: 0, tasaProgreso: 0 });
+  const [todasLasTareas, setTodasLasTareas] = useState<Tarea[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<FiltroTareas>({ estado: 'todas', prioridad: 'todas', busqueda: '' });
   
@@ -44,13 +44,42 @@ export default function DashboardPage() {
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const recalcularEstadisticas = (lista: Tarea[]) => {
-    const total = lista.length;
-    const completadas = lista.filter((t) => t.completada).length;
+  /**
+   * Cálculo de métricas globales (siempre sobre la totalidad de tareas del usuario)
+   */
+  const stats = useMemo(() => {
+    const total = todasLasTareas.length;
+    const completadas = todasLasTareas.filter((t) => t.completada).length;
     const pendientes = total - completadas;
     const tasaProgreso = total > 0 ? Math.round((completadas / total) * 100) : 0;
-    setStats({ total, completadas, pendientes, tasaProgreso });
-  };
+    return { total, completadas, pendientes, tasaProgreso };
+  }, [todasLasTareas]);
+
+  /**
+   * Filtrado en memoria instantáneo (0 ms) para las tareas que se muestran en pantalla
+   */
+  const tareasFiltradas = useMemo(() => {
+    return todasLasTareas.filter((t) => {
+      // 1. Filtro por estado
+      if (filter.estado === 'completadas' && !t.completada) return false;
+      if (filter.estado === 'pendientes' && t.completada) return false;
+
+      // 2. Filtro por nivel de prioridad
+      if (filter.prioridad && filter.prioridad !== 'todas' && t.prioridad !== filter.prioridad) {
+        return false;
+      }
+
+      // 3. Filtro por búsqueda de texto
+      if (filter.busqueda?.trim()) {
+        const termino = filter.busqueda.toLowerCase();
+        const coincideTitulo = t.titulo.toLowerCase().includes(termino);
+        const coincideDesc = t.descripcion ? t.descripcion.toLowerCase().includes(termino) : false;
+        if (!coincideTitulo && !coincideDesc) return false;
+      }
+
+      return true;
+    });
+  }, [todasLasTareas, filter]);
 
   const mostrarNotificacion = (
     type: 'success' | 'error' | 'info',
@@ -67,21 +96,20 @@ export default function DashboardPage() {
   };
 
   /**
-   * Carga de datos desde Supabase (solo muestra skeleton en carga inicial)
+   * Carga de datos inicial desde Supabase
    */
   const cargarDatos = useCallback(async (mostrarEsqueleto = false) => {
     try {
       if (mostrarEsqueleto) setIsLoading(true);
-      const items = await todoService.getTodos(filter);
-      setTodos(items);
-      recalcularEstadisticas(items);
+      const items = await todoService.getTodos();
+      setTodasLasTareas(items);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al sincronizar las tareas';
       mostrarNotificacion('error', msg);
     } finally {
       setIsLoading(false);
     }
-  }, [filter]);
+  }, []);
 
   useEffect(() => {
     const inicializar = async () => {
@@ -102,10 +130,10 @@ export default function DashboardPage() {
   }, [router, cargarDatos]);
 
   // =========================================================================
-  // OPERACIONES OPTIMISTAS (OPTIMISTIC UI - 0 RETARDO PERCIBIDO)
+  // OPERACIONES OPTIMISTAS (0 ms DE LATENCIA)
   // =========================================================================
 
-  /** Crear tarea con inserción optimista */
+  /** Crear tarea */
   const handleAddTodo = async (dto: CrearTareaDTO) => {
     const idTemporal = 'temp-' + Date.now();
     const tareaOptimista: Tarea = {
@@ -119,94 +147,76 @@ export default function DashboardPage() {
       actualizado_en: new Date().toISOString(),
     };
 
-    // Actualización inmediata en UI
-    const nuevaLista = [tareaOptimista, ...todos];
-    setTodos(nuevaLista);
-    recalcularEstadisticas(nuevaLista);
+    // Inserción optimista inmediata
+    setTodasLasTareas((prev) => [tareaOptimista, ...prev]);
 
     try {
       const creada = await todoService.createTodo(dto);
-      // Reemplazamos la temporal con la confirmada de Supabase
-      setTodos((prev) => prev.map((t) => (t.id === idTemporal ? creada : t)));
+      setTodasLasTareas((prev) => prev.map((t) => (t.id === idTemporal ? creada : t)));
     } catch (err: unknown) {
-      // Rollback en caso de error
-      setTodos((prev) => prev.filter((t) => t.id !== idTemporal));
-      recalcularEstadisticas(todos);
+      setTodasLasTareas((prev) => prev.filter((t) => t.id !== idTemporal));
       const msg = err instanceof Error ? err.message : 'No se pudo guardar la tarea';
       mostrarNotificacion('error', msg);
     }
   };
 
-  /** Alternar estado completada con actualización optimista */
+  /** Alternar estado de completitud */
   const handleToggle = async (id: string, nuevoEstado: boolean) => {
-    // 1. Inmediato en pantalla
-    const listaAnterior = [...todos];
-    const nuevaLista = todos.map((t) =>
-      t.id === id ? { ...t, completada: nuevoEstado, actualizado_en: new Date().toISOString() } : t
+    const listaAnterior = [...todasLasTareas];
+    setTodasLasTareas((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, completada: nuevoEstado, actualizado_en: new Date().toISOString() } : t
+      )
     );
-    setTodos(nuevaLista);
-    recalcularEstadisticas(nuevaLista);
 
-    // 2. Sincronización en segundo plano con Supabase
     try {
       await todoService.toggleTodo(id, nuevoEstado);
-    } catch (err: unknown) {
-      // Revertir estado si la red falla
-      setTodos(listaAnterior);
-      recalcularEstadisticas(listaAnterior);
+    } catch {
+      setTodasLasTareas(listaAnterior);
       mostrarNotificacion('error', 'Error al sincronizar el estado.');
     }
   };
 
-  /** Eliminar tarea de forma optimista con función de Deshacer (Undo) */
+  /** Eliminar tarea con soporte para Deshacer (Undo) */
   const handleDelete = async (id: string) => {
-    const tareaEliminada = todos.find((t) => t.id === id);
+    const tareaEliminada = todasLasTareas.find((t) => t.id === id);
     if (!tareaEliminada) return;
 
-    const listaAnterior = [...todos];
-    const nuevaLista = todos.filter((t) => t.id !== id);
-    
-    // Eliminación visual inmediata
-    setTodos(nuevaLista);
-    recalcularEstadisticas(nuevaLista);
+    const listaAnterior = [...todasLasTareas];
+    setTodasLasTareas((prev) => prev.filter((t) => t.id !== id));
 
     let cancelado = false;
 
-    // Toast interactivo con botón "Deshacer"
     mostrarNotificacion('info', `Tarea "${tareaEliminada.titulo}" eliminada.`, () => {
       cancelado = true;
-      setTodos(listaAnterior);
-      recalcularEstadisticas(listaAnterior);
+      setTodasLasTareas(listaAnterior);
       setNotificacion(null);
     });
 
-    // Esperar 4.5s antes de ejecutar el borrado permanente en Supabase si no se canceló
     setTimeout(async () => {
       if (!cancelado) {
         try {
           await todoService.deleteTodo(id);
         } catch {
-          setTodos(listaAnterior);
-          recalcularEstadisticas(listaAnterior);
+          setTodasLasTareas(listaAnterior);
         }
       }
     }, 4500);
   };
 
-  /** Actualizar tarea de forma optimista */
+  /** Actualizar tarea */
   const handleUpdate = async (id: string, updates: ActualizarTareaDTO) => {
-    const listaAnterior = [...todos];
-    const nuevaLista = todos.map((t) =>
-      t.id === id ? { ...t, ...updates, actualizado_en: new Date().toISOString() } : t
+    const listaAnterior = [...todasLasTareas];
+    setTodasLasTareas((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, ...updates, actualizado_en: new Date().toISOString() } : t
+      )
     );
-    setTodos(nuevaLista);
-    recalcularEstadisticas(nuevaLista);
 
     try {
       await todoService.updateTodo(id, updates);
-    } catch (err: unknown) {
-      setTodos(listaAnterior);
-      recalcularEstadisticas(listaAnterior);
+    } catch {
+      setTodasLasTareas(listaAnterior);
       mostrarNotificacion('error', 'No se pudieron guardar los cambios.');
     }
   };
@@ -216,7 +226,7 @@ export default function DashboardPage() {
       <Navbar userEmail={userEmail} />
 
       <main className="app-container">
-        {/* Floating Toast Notification (Minimalist) */}
+        {/* Notificación flotante (Toast) */}
         {notificacion && (
           <div
             className="animate-fade-in"
@@ -245,7 +255,7 @@ export default function DashboardPage() {
               {notificacion.message}
             </span>
 
-            {/* Undo Button if applicable */}
+            {/* Botón Deshacer */}
             {notificacion.onUndo && (
               <button
                 onClick={notificacion.onUndo}
@@ -279,7 +289,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Dashboard Header */}
+        {/* Encabezado */}
         <div style={{ marginBottom: '1.75rem' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600, letterSpacing: '-0.03em' }}>
             Mis Tareas
@@ -289,18 +299,18 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Minimal KPI Stats Bar */}
+        {/* Barra de Métricas Globales (Siempre precisa e independiente del filtro) */}
         <TodoStatsCards stats={stats} />
 
-        {/* Quick Capture Input Form */}
+        {/* Formulario de Entrada */}
         <TodoForm onAddTodo={handleAddTodo} />
 
-        {/* Filters */}
+        {/* Filtros */}
         <TodoFilterBar filter={filter} onFilterChange={setFilter} />
 
-        {/* Todo List */}
+        {/* Lista de Tareas Filtradas */}
         <TodoList
-          todos={todos}
+          todos={tareasFiltradas}
           isLoading={isLoading}
           onToggle={handleToggle}
           onDelete={handleDelete}
